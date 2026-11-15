@@ -1,0 +1,8 @@
+__pycache__
+*.pyc
+.git
+uploads/
+data/admin.json
+data/crop_photos.json
+*.sqlite3
+scripts/__pycache__

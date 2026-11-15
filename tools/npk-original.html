@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<script src="/tools/tools-i18n.js"></script>
+<script>if(/[?&]embed=1/.test(location.search))document.documentElement.classList.add("embedded")</script>
+<style>.embedded header,.embedded .top,.embedded footer{display:none!important}.embedded body{margin:0!important;padding:8px!important}</style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AAIAP — демонстрационный калькулятор NPK и севооборот</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#15352d;background:#f4f8f5}
+*{box-sizing:border-box}body{margin:0;padding:30px 16px}.wrap{max-width:1080px;margin:auto}h1{margin:0 0 8px;font-size:clamp(25px,4vw,38px)}h2{font-size:19px;margin:0 0 14px}.sub{color:#527064;margin:0 0 24px}.card{background:white;border:1px solid #dce9e0;border-radius:16px;padding:22px;margin:16px 0;box-shadow:0 4px 16px #17382a0b}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:16px}label{display:block;font-size:13px;font-weight:650;margin-bottom:6px}input,select{width:100%;padding:11px 12px;border:1px solid #c8d7ce;border-radius:8px;font:inherit;background:white;color:#163429}input:focus,select:focus{outline:2px solid #7dbb96}.hint{color:#65786f;font-size:12px;margin:6px 0 0}.note{font-size:13px;line-height:1.5;color:#586b61}.warning{background:#fff8e8;color:#6d5317;border:1px solid #e9d39c;border-radius:10px;padding:12px 14px;font-size:13px;margin:12px 0}.err{background:#ffecea;color:#8c2424;border:1px solid #e8aaa2;border-radius:9px;padding:11px;margin:12px 0}.metric{padding:16px;background:#eef7ef;border-radius:11px}.metric strong{font-size:24px;display:block;margin-top:5px}.metric span{font-size:13px;color:#4a6155}table{border-collapse:collapse;width:100%;margin-top:12px}th,td{padding:11px 8px;text-align:left;border-bottom:1px solid #e4eee7}th{font-size:13px;color:#496559}td{font-variant-numeric:tabular-nums}.scroll{overflow-x:auto}button{background:#216c49;color:#fff;border:0;border-radius:9px;padding:12px 18px;font:inherit;font-weight:650;cursor:pointer}button:hover{background:#195739}.secondary{background:#e9f2ea;color:#205339}.secondary:hover{background:#d8ebdb}.actions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}#results{display:none}.foot{font-size:12px;color:#60796b;line-height:1.55}
+</style>
+</head>
+<body><main class="wrap">
+<h1>AAIAP · Калькулятор NPK</h1><p class="sub">Интерактивная демонстрация расчёта удобрений по планируемой урожайности и площади поля</p>
+<div class="warning"><b>ДЕМО · данные условные:</b> стартовые значения взяты для показа работы программы и не являются измерениями конкретного поля. Это расчётная модель, а не готовая агрономическая рекомендация. Нормы выноса питательных веществ и коэффициенты усвоения должны быть подтверждены агрономом для культуры, почвы и региона. Значения почвенного вклада вводите в кг/га доступного питания, <b>не в ppm</b>.</div>
+<section class="card"><h2>1. Поле и планируемый урожай</h2><div class="grid">
+<div><label for="crop">Культура</label><select id="crop"><option>Пшеница</option><option>Кукуруза</option><option>Рис</option><option>Картофель</option><option>Горох</option><option>Другая культура</option></select></div>
+<div><label for="area">Площадь (га)</label><input id="area" type="number" min="0.01" step="any" value="10"></div>
+<div><label for="yield">Планируемая урожайность (т/га)</label><input id="yield" type="number" min="0.01" step="any" value="5"></div>
+</div><p class="hint">Выбор культуры подставляет демонстрационные значения урожайности, коэффициентов и почвенного обеспечения. Их можно менять вручную.</p></section>
+<section class="card"><h2>2. Потребление элементов на тонну урожая</h2><p class="note">Укажите согласованные с агрономом коэффициенты (кг питательного вещества на 1 т урожая). Для расчёта нужны все три значения.</p><div class="grid">
+<div><label for="nRate">N (кг/т)</label><input id="nRate" type="number" min="0" step="any" value="0"></div>
+<div><label for="pRate">P₂O₅ (кг/т)</label><input id="pRate" type="number" min="0" step="any" value="0"></div>
+<div><label for="kRate">K₂O (кг/т)</label><input id="kRate" type="number" min="0" step="any" value="0"></div>
+</div><p class="hint">Важно: коэффициенты должны описывать одну и ту же методику (например, потребление на единицу товарного урожая) и учитывать соответствующие растительные остатки.</p></section>
+<section class="card"><h2>3. Вклад почвы и других источников</h2><p class="note">Оценка доступного питания в кг/га за сезон, с учётом анализа почвы, остатков, органики и прочих источников. Если данных нет, оставьте 0 лишь для условного сценария.</p><div class="grid">
+<div><label for="soilN">Доступный N (кг/га)</label><input id="soilN" type="number" min="0" step="any" value="45"></div>
+<div><label for="soilP">Доступный P₂O₅ (кг/га)</label><input id="soilP" type="number" min="0" step="any" value="10"></div>
+<div><label for="soilK">Доступный K₂O (кг/га)</label><input id="soilK" type="number" min="0" step="any" value="25"></div>
+</div></section>
+<section class="card"><h2>4. Эффективность удобрений (доля от внесённого, %)</h2><p class="note">Показывает, какая доля внесённого элемента становится доступной для расчётного обеспечения потребности. 100% — упрощённая математическая модель; реальные значения зависят от условий.</p><div class="grid">
+<div><label for="effN">Эффективность N (%)</label><input id="effN" type="number" min="1" max="100" step="any" value="65"></div>
+<div><label for="effP">Эффективность P₂O₅ (%)</label><input id="effP" type="number" min="1" max="100" step="any" value="60"></div>
+<div><label for="effK">Эффективность K₂O (%)</label><input id="effK" type="number" min="1" max="100" step="any" value="75"></div>
+</div></section>
+<section class="card"><h2>5. Состав удобрений</h2><p class="note">Пример комплекта: моноаммонийфосфат (MAP), карбамид и хлористый калий. Проценты можно отредактировать по этикетке.</p>
+<div class="grid"><div><label for="mapN">MAP: N (%)</label><input id="mapN" type="number" min="0" max="100" step="any" value="12"></div><div><label for="mapP">MAP: P₂O₅ (%)</label><input id="mapP" type="number" min="0.01" max="100" step="any" value="52"></div><div><label for="ureaN">Карбамид: N (%)</label><input id="ureaN" type="number" min="0.01" max="100" step="any" value="46"></div><div><label for="potashK">Калийное удобрение: K₂O (%)</label><input id="potashK" type="number" min="0.01" max="100" step="any" value="60"></div></div></section>
+<div class="actions"><button id="calculate">Рассчитать</button><button id="reset" type="button" class="secondary">Загрузить демо-данные</button></div>
+<div id="error" role="alert"></div>
+<section id="results" class="card" aria-live="polite"><h2>Результат</h2><div class="grid" id="highlights"></div><h2 style="margin-top:25px">Баланс питательных элементов (кг/га)</h2><div class="scroll"><table><thead><tr><th>Элемент</th><th>Потребность культуры</th><th>Вклад почвы</th><th>Нужно из удобрений*</th></tr></thead><tbody id="nutrientRows"></tbody></table></div><p class="hint">* С учётом введённой эффективности удобрений.</p><h2 style="margin-top:25px">Расчёт количества удобрений</h2><div class="scroll"><table><thead><tr><th>Продукт</th><th>кг/га</th><th>На всё поле, кг</th></tr></thead><tbody id="productRows"></tbody></table></div><p class="note" id="comment"></p></section>
+<section class="card" id="rotation"><h2>Пятипольный севооборот · пример</h2><p class="note">Пять равных полей проходят пять звеньев за пять лет. Для презентации показана условная схема: люцерна → озимая пшеница → кукуруза → горох → озимая пшеница. Реальная схема зависит от водообеспечения, сроков посева, почвы и фитосанитарных условий. Люцерна обычно многолетняя: здесь показан учебный одногодичный вариант использования с последующей сменой культуры.</p><div class="scroll"><table><thead><tr><th>Поле</th><th>2026</th><th>2027</th><th>2028</th><th>2029</th><th>2030</th></tr></thead><tbody id="rotationRows"></tbody></table></div><p class="hint">Ежегодно каждая культура перемещается на следующее поле. Это наглядная демонстрация, а не готовая региональная схема.</p></section>
+<p class="foot">Демо-коэффициенты N/P/K и почвенного вклада являются иллюстративными. Для зерновых и картофеля справочные значения выноса P₂O₅/K₂O доступны в <a href="https://www.pda.org.uk/pda_leaflets/nutrients-in-crop-material/nutrient-offtake-and-nutrient-uptake/" target="_blank" rel="noopener">PDA / RB209</a>; подход к оценке выноса N описан <a href="https://landresources.montana.edu/soilfertility/nutuptake.html" target="_blank" rel="noopener">Montana State University Extension</a>. Значения в демо не следует трактовать как единый утверждённый набор нормативов. Методика расчёта: потребность = урожайность × коэффициент; дефицит = max(0, потребность − доступный вклад почвы); норма питательного элемента из удобрений = дефицит / эффективность. Продукты рассчитываются по массовой доле N–P₂O₅–K₂O. Это упрощённый сценарный инструмент. Итоговые дозы требуют проверки с учётом результатов анализа почвы, методики лаборатории, урожайного потенциала, агротехники и местных ограничений.</p>
+</main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const fmt=n=>new Intl.NumberFormat('ru-RU',{maximumFractionDigits:2}).format(n);
+function read(id,{positive=false,percent=false}={}){
+ const el=$(id),raw=el.value.trim();
+ if(raw==='')throw Error(`Заполните поле «${el.previousElementSibling.textContent}».`);
+ const v=Number(raw);
+ if(!Number.isFinite(v)||v<0||(positive&&v<=0)||(percent&&(v<=0||v>100)))throw Error(`Недопустимое значение поля «${el.previousElementSibling.textContent}».`);
+ return v;
+}
+function calc(){
+ $('error').innerHTML='';$('results').style.display='none';
+ try{
+ const area=read('area',{positive:true}),yieldTarget=read('yield',{positive:true});
+ const r=[read('nRate'),read('pRate'),read('kRate')];
+ const soil=[read('soilN'),read('soilP'),read('soilK')];
+ const eff=[read('effN',{percent:true}),read('effP',{percent:true}),read('effK',{percent:true})].map(v=>v/100);
+ const mapN=read('mapN')/100,mapP=read('mapP',{percent:true})/100;
+ const ureaN=read('ureaN',{percent:true})/100,potashK=read('potashK',{percent:true})/100;
+ if(mapN>1||mapN+mapP>1)throw Error('Некорректный состав MAP: сумма процентов N и P₂O₅ превышает 100%.');
+ const need=r.map(v=>v*yieldTarget);
+ const deficit=need.map((v,i)=>Math.max(0,v-soil[i]));
+ const applied=deficit.map((v,i)=>v/eff[i]);
+ // First supply P₂O₅ with MAP, then subtract N supplied by MAP before calculating urea.
+ const map=applied[1]/mapP;
+ const nFromMap=map*mapN;
+ const nExtra=Math.max(0,applied[0]-nFromMap);
+ const urea=nExtra/ureaN;
+ const potash=applied[2]/potashK;
+ const surplusN=Math.max(0,nFromMap-applied[0]);
+ $('highlights').innerHTML=`<div class="metric"><span>Площадь</span><strong>${fmt(area)} га</strong></div><div class="metric"><span>План урожая</span><strong>${fmt(yieldTarget*area)} т</strong></div><div class="metric"><span>Всего удобрений</span><strong>${fmt((map+urea+potash)*area)} кг</strong></div>`;
+ const names=['N','P₂O₅','K₂O'];
+ $('nutrientRows').innerHTML=names.map((name,i)=>`<tr><td>${name}</td><td>${fmt(need[i])}</td><td>${fmt(soil[i])}</td><td>${fmt(applied[i])}</td></tr>`).join('');
+ const products=[['MAP',map],['Карбамид',urea],['Калийное удобрение',potash]];
+ $('productRows').innerHTML=products.map(([name,amount])=>`<tr><td>${name}</td><td>${fmt(amount)}</td><td>${fmt(amount*area)}</td></tr>`).join('');
+ let comments='MAP сначала покрывает расчётную потребность в P₂O₅ и одновременно вносит N. Количество карбамида уменьшено с учётом азота из MAP. ';
+ if(surplusN>0.001)comments+=`Внимание: выбранный MAP даёт избыток N на ${fmt(surplusN)} кг/га относительно расчётной нормы удобрений; рассмотрите другой фосфорный продукт с агрономом. `;
+ if(soil.some(v=>v===0))comments+='Нулевой вклад почвы означает условный сценарий, а не доказанное отсутствие питательных веществ. ';
+ comments+='Не используйте этот результат как норму внесения без агрономической проверки.';
+ $('comment').textContent=comments;$('results').style.display='block';
+ }catch(e){const el=document.createElement('div');el.className='err';el.textContent=e.message;$('error').replaceChildren(el);}
+}
+$('calculate').addEventListener('click',calc);
+// Coefficients are illustrative whole-crop requirements per tonne, not certified local fertilizer recommendations.
+const presets={
+ 'Пшеница':{yield:5,r:[25,10,20],soil:[45,10,25]},
+ 'Кукуруза':{yield:7,r:[24,10,22],soil:[50,12,35]},
+ 'Рис':{yield:5,r:[20,9,19],soil:[40,9,30]},
+ 'Картофель':{yield:25,r:[4,1.5,6],soil:[35,15,60]},
+ 'Горох':{yield:3,r:[12,10,15],soil:[20,10,30]},
+ 'Другая культура':{yield:5,r:[20,8,15],soil:[40,10,30]}
+};
+function loadDemo(){
+ const x=presets[$('crop').value];
+ $('yield').value=x.yield;
+ ['nRate','pRate','kRate'].forEach((id,i)=>$(id).value=x.r[i]);
+ ['soilN','soilP','soilK'].forEach((id,i)=>$(id).value=x.soil[i]);
+ ['effN','effP','effK'].forEach((id,i)=>$(id).value=[65,60,75][i]);
+ $('area').value=10;
+ ['mapN','mapP','ureaN','potashK'].forEach((id,i)=>$(id).value=[12,52,46,60][i]);
+ calc();
+}
+$('crop').addEventListener('change',loadDemo);
+$('reset').addEventListener('click',loadDemo);
+const sequence=['Люцерна','Озимая пшеница','Кукуруза','Горох','Озимая пшеница'];
+$('rotationRows').innerHTML=Array.from({length:5},(_,field)=>'<tr><th>Поле '+(field+1)+'</th>'+Array.from({length:5},(_,year)=>'<td>'+sequence[(field-year+5)%5]+'</td>').join('')+'</tr>').join('');
+loadDemo();
+</script>
+</body></html>

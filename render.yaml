@@ -1,0 +1,16 @@
+# Example Render Blueprint for the evaluation demo.
+# Review plan availability and cold-start behaviour on Render before inviting judges.
+services:
+  - type: web
+    name: agrosupport-demo
+    env: docker
+    plan: free
+    autoDeploy: false
+    healthCheckPath: /api/health
+    envVars:
+      - key: AAIAP_MODE
+        value: cloud-demo
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: '10000'

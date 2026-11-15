@@ -1,0 +1,1301 @@
+--- a/.dockerignore
++++ b/.dockerignore
+@@ -0,0 +1,8 @@
++__pycache__
++*.pyc
++.git
++uploads/
++data/admin.json
++data/crop_photos.json
++*.sqlite3
++scripts/__pycache__
+--- a/.gitignore
++++ b/.gitignore
+@@ -7,5 +7,8 @@
+ .DS_Store
+ 
+ # Local server-private images, credentials and secrets
+-/data/
++/data/*
++!/data/crop_thresholds.json
+ /uploads/
++*.log
++.tmp/
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -0,0 +1,6 @@
++FROM python:3.12-slim
++ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 AAIAP_MODE=cloud-demo HOST=0.0.0.0 PORT=10000
++WORKDIR /app
++COPY . /app
++EXPOSE 10000
++CMD ["python","server.py"]
+--- a/IMPLEMENTATION_STATUS.md
++++ b/IMPLEMENTATION_STATUS.md
+@@ -0,0 +1,54 @@
++# AAIAP 0.1.1-demo — acceptance status (November 15, 2026)
++
++**Base:** latest available archive v0.0.6. Requested v0.0.8 was not attached.
++
++| Judging criterion | Status | Reviewer note | Non-guaranteed expected score after connected tests |
++|---|---|---|---|
++| No login | Implemented | Farmer catalogue without account; cloud mode has no editor / public uploads | 9/10 |
++| Usability | Partial | One-click corn demo, responsive adjustments and fallback map; browser rendering not fully tested | 7/10 |
++| Cloud access | Partial | Dockerfile, Render Blueprint, health endpoint; NOT actually deployed; free service cold starts | 4/10 |
++| Disclosure of AI | Partial | Transparent deterministic template; no LLM provider integration or live generative claims | 6/10 |
++| Impact | Partial | Crop catalogue and research station pilot; Tajik pilots remain unverified | 6/10 |
++| Creativity | Partial | Climate Twin heuristic from actual POWER data on demand; online check pending | 6/10 |
++| Validity | Partial | Tested GDD/frost/heat math; no ground-station bias/MAE/RMSE established | 7/10 |
++| Relevance / NASA | Partial | POWER, experimental ORNL MODIS endpoint, GIBS true-colour overlay; live services NOT verified here | 6/10 |
++
++These are **internal planning estimates**, not official NASA Space Apps scores. No category is guaranteed to earn any particular score; successful judging depends on real deploy, evidence and demonstration quality.
++
++## Implemented in code
++
++- Cloud config (`AAIAP_MODE=cloud-demo`), no public uploads/admin, environment port and host, API request throttling and security response headers.
++- Daily NASA POWER-based calculated season indicators, explicit source/date/scale/limitations; dynamic last completed year.
++- NASA ORNL MODIS experimental NDVI subset endpoint, honest approximate spatial resolution and absent QA limitation.
++- NASA GIBS MODIS Terra historical true-colour layer button; external layers require real Internet and correct service capabilities.
++- Climate Twin from POWER daily data of two labeled *reference points*, with disclosed heuristic scales; **not a crop suitability score**.
++- Evidence Meter, deterministic multilingual summary and methodology page; template explicitly states when no AI model has run.
++- Safe map fallback when Leaflet CDN fails, invalidation after hidden map becomes visible, OSM tile-error warning.
++- Removal of fake soil/water/NDVI/temperature values from Tajik demo sites.
++- Real-only dated snapshot writer and reader; no fabricated responses distributed.
++- 24 passing Python tests and Node JS syntax checks.
++
++## Partial or not completed
++
++- The actual v0.0.8 source wasn't provided; the implementation builds on v0.0.6.
++- No public HTTPS URL has been provisioned: `agrosupport.earth` remains unlinked to this build.
++- **No real NASA/NOAA/USDA snapshots shipped** because outbound connections from the coding environment are unavailable.
++- NDVI endpoint/parameters and NASA GIBS WMTS layer/time must be tested online against current `GetCapabilities`; GIBS is a true-colour layer, not the requested NDVI overlay yet.
++- No full historical normal / calibrated seasonal window / real ground-station validation.
++- No full LLM integration: template mode only, labelled honestly. Numbers are never AI-generated.
++- External Leaflet and Google Fonts not packaged locally; fallback prevents a hard map crash, but complete offline geographic map requires licensed vendor files. No font binaries included.
++- Crop photos are still partly remote Unsplash links: licensing and local attribution require review by the team.
++- Browser's local network is blocked in the build environment, so pixel-level interface verification could not be performed; human should test at 360/768/1366/1920 px.
++- Prompted 3-language interface updates are largely implemented for new NASA views; technical labels and some legacy screens still require native Tajik review.
++- Cloud Python stdlib server still needs production security review before a high-traffic public launch. No cloud uptime SLA on free tier.
++- Owner must decide repo licence and image re-distribution rights before publication.
++
++## Practical pre-jury action list
++
++1. Run `py -3 server.py`, check welcome/demo/Science & AI and GIS fallback with network disabled.
++2. On an Internet-connected machine execute `py -3 scripts/refresh_snapshots.py`, inspect all real JSON responses and dates.
++3. Validate POWER vs a real Nebraska Mesonet/NOAA station; fill `docs/validation_report.md` with actual results.
++4. Verify GIBS layer/tile date and MODIS subset outputs, ground pixels and QA; do not show false conclusions.
++5. Replace external illustrations with licensed sourced photos and review all Tajik text.
++6. Deploy using `render.yaml` or another host; verify external URL, HTTPS and mobile loading. Free Render spins down after inactivity; plan for a judge-safe available deployment.
++7. Test AI claims with slide deck: label template as template, do not call it LLM when no LLM was used.
+--- a/Procfile
++++ b/Procfile
+@@ -0,0 +1 @@
++web: python server.py
+--- a/README.md
++++ b/README.md
+@@ -1,48 +1,74 @@
+-# AAIAP v0.0.6 — Nebraska / Farmers' photo gallery
++# AgroSupport / AAIAP — v0.1.1-demo
+ 
+-Это рабочая локальная веб-версия. **В архиве файлы расположены в корне проекта**: сразу после распаковки рядом с `index.html` находится `server.py`. Распаковывайте архив в отдельную папку `AAIAP-v0.0.6`.
++A judge-friendly, no-account agronomic research demo built from the **available v0.0.6 project**. The prompt targeted v0.0.8, but its archive was not included with the input. The v0.0.6 baseline preserves the latest accessible design, multilingual UI, NASA/NOAA/NRCS endpoints, crop catalogue and calculator tools.
+ 
+-## Запуск в Windows / VS Code
++## Quick test on Windows (Python 3.11+)
+ 
+-1. Остановите старый Python-сервер (`Ctrl+C` в старом терминале).
+-2. Распакуйте ZIP в новую папку и откройте именно эту папку в VS Code.
+-3. Выполните `py -3 server.py` или дважды щёлкните по `start_windows.bat`.
+-4. Откройте **http://127.0.0.1:8000**. Если остались старые стили, нажмите `Ctrl+F5`.
+-5. Функция добавления фото находится по пути: **Культуры → Изучить культуру → О растении → Фотографии фермеров**.
++Unzip the entire archive; `server.py` must be in the current folder.
+ 
+-Для **галереи фермеров** регистрация и пароль не требуются. Для **замены главного фото каталога** сохранён отдельный защищённый редактор: необязательно выполните `py -3 setup_admin.py` и задайте пароль администратора. Файла `server_admin.py` не существует. **Live Server в VS Code не подходит для сохранения фотографий**, он не обрабатывает Python API.
++```powershell
++py -3 server.py
++```
+ 
+-## Новый дизайн
++Then visit <http://127.0.0.1:8000>. Press **NASA DEMO / Corn** on the welcome page. A **Science & AI** nav link contains methodology and disclosure. The **NASA data** tab loads calculated season data, MODIS exploratory NDVI and Climate Twin (only if the official services respond).
+ 
+-Сохранены последние дизайнерские стили из присланного `AAIAP-web-5.2.2.zip`: насыщенные цвета, фоновые изображения, крупные карточки каталога и новый макет страницы культуры. Шрифт **PT Sans** применяется как в ранее согласованной версии; он подгружается через Google Fonts и требует интернет, иначе будет запасной Arial. Файлы шрифтов в ZIP не включены.
++If Leaflet or external map tiles fail, the site displays a research-site navigation fallback instead of crashing. A satellite layer may not render without working remote NASA GIBS tiles. The layer identification and time interval should be verified against current `GetCapabilities`.
+ 
+-## Что сохранено от научной версии
++## Cloud demo (no registration and no upload)
+ 
+-- Исследовательская точка **UNL South Central Agricultural Laboratory** (Nebraska), координаты 40.575256, -98.137824. Это координаты станции, **не** проверенный контур конкретного поля.
+-- Публичный каталог 14 культур, поиск, фильтры и информационные карточки; региональные оценки пригодности остаются иллюстративными, а не научным рейтингом.
+-- «О растении / Как выращивать», «Земля», «NPK», «Орошение», «Погода», «Данные местности» с 7 основными источниками и дополнительными и «AAIAP (позже)».
+-- Серверные маршруты для NASA POWER (исторический 2025), NOAA/NWS (прогноз), USDA NRCS (почвенные картографические единицы). Реальный ответ внешних API зависит от интернет-соединения и доступности источников. CDL, OpenET, PRISM и Sentinel-2 пока представлены ссылками/описаниями, а не работающими интеграциями.
+-- Исходный GIS-раздел, аэрофотослои, области и интерактивные блоки. Калькуляторы используют только введённые нормы; AI не подключён.
++The application includes an isolated cloud mode:
+ 
+-## Фотографии, которые добавляют фермеры
++```powershell
++$env:AAIAP_MODE='cloud-demo'
++$env:HOST='0.0.0.0'
++$env:PORT='10000'
++py -3 server.py
++```
+ 
+-- На вкладке **«О растении»** находится галерея снимков конкретной культуры.
+-- **Любой посетитель этого сервера** может выбрать JPEG, PNG или WebP до 5 МБ и нажать «Сохранить на сервере». Учетная запись и пароль не нужны.
+-- Снимок попадёт в общую галерею соответствующей культуры. Он **не заменяет** исходное изображение в каталоге и не меняет научные сведения. Основное фото культуры меняет только администратор через отдельный редактор в шапке.
+-- Рядом всегда написано: **«Загружено пользователем · не проверено»**. Это не гарантирует, что снимок сделан в Небраске или на конкретном поле.
+-- Не загружайте фото людей и частную информацию. Сервер удаляет стандартные метаданные JPEG (EXIF/IPTC/XMP), PNG и WebP; но не распознаёт личную информацию внутри самого изображения.
+-- Для защиты локального ноутбука: максимум **12 фото на культуру**, **12 загрузок в час с одного IP**. Файлы физически хранятся в `uploads/community/<crop>/`, а список в `data/farmer_photos.json` (настройка `AAIAP_STORAGE_DIR` позволяет задать постоянную папку хранения).
+-- Фото можно удалить вручную после остановки сервера: удалите запись о нём из `data/farmer_photos.json` и соответствующий файл. Через сайт удаление недоступно, чтобы пользователи не могли стирать чужие снимки.
+-- **При обновлении проекта не удаляйте и не заменяйте папки `data/` и `uploads/`:** сохраните их отдельно и перенесите в новую версию. Регулярно делайте резервные копии.
++`cloud-demo` disables administrator sessions, admin editing, community photo uploads, and access to local upload storage (HTTP 403/404); no user login exists. It uses environment `PORT`/`HOST`, JSON response limits, headers, rate limits, and a cached API. `/api/health` exposes the deployment version and cache / snapshot status. Keep HTTPS termination on the hosting platform.
+ 
+-## Безопасность и публикация
++**Deploy via Render Blueprint (example only):**
++1. Push the project to a private or public Git repository **excluding** `.env`, `data/admin.json`, and `uploads/`.
++2. In Render choose **New → Blueprint**, connect the repo and confirm `render.yaml`.
++3. Check whether the selected `free` plan still exists and its inactivity/cold-start limits before publishing to judges.
++4. Wait for a successful health check (`/api/health`), then open the generated HTTPS address from an unrelated mobile device.
++5. At the domain registrar for `agrosupport.earth`, configure the domain records **exactly as Render displays**; verify certificate issuance. No Cloudflare or access gate is required for viewers.
++6. Ensure the app is awake and externally accessible during judging; free instances can cold-start or be unavailable. This project is a research demo, **not a hardened production host**.
+ 
+-**Важное ограничение:** этот сервер предназначен только для локального тестирования. По умолчанию доступен лишь с этого ноутбука (`127.0.0.1`). Отсутствие регистрации означает, что при будущем размещении в сети любой человек сможет загрузить изображение; без модерации, антиспама, ограничений ресурсов, HTTPS и изоляции сервера публикация недопустима. **Не открывайте порт 8000 в Интернет** и не меняйте `AAIAP_HOST` на `0.0.0.0` для публичной работы.
++A `Dockerfile`, `Procfile`, and `.dockerignore` are included. The demo uses Python stdlib only (no pip install). Persistent file uploads are intentionally disabled in the cloud because free hosts may have ephemeral file systems.
+ 
+-## Проверки
++## Scientific integrity
++
++- **Real sources when connected:** NASA POWER (daily), NASA ORNL MODIS (experimental), NASA GIBS true-colour layer (historical tiles), NOAA/NWS forecast, USDA NRCS SSURGO map units. External availability is **not verified from this offline build environment**. An API error shows an unavailable state.
++- **No fabricated NASA responses:** `data_snapshots/` initially contains no data JSON. After verifying outbound access, run `py -3 scripts/refresh_snapshots.py`, inspect source URLs and dates, and commit only authenticated successful output. At an API outage the site can display a **dated real saved snapshot**.
++- **Calculation:** `agro_calc.py` includes documented corn GDD using 10–30 °C clamping, summer precipitation, heat days and freeze markers. `data/crop_thresholds.json` records the source and leaves other crop GDD thresholds unspecified.
++- **Climate Twin:** an **uncalibrated** multifeature similarity between a Nebraska research station reference point and an approximate Tajik regional location, *not proof of comparable soil or farming practices*. Network-dependent: no generated percentage before actual POWER data.
++- **NDVI:** MOD13Q1 subset service; pixel scale about 250m, quality flags are not fully handled yet. Do not interpret as a single farm's NDVI.
++- **Validation:** ground station validation is pending. `docs/validation_report.md` and `scripts/validate_power.py` explain how to reproduce it with actual NASA/ground CSV observations.
++- **AI:** `POST /api/assistant/summary` currently offers **deterministic template mode only**, explicitly labelled; no LLM claims or secret keys in browser. The PDF/slide claim must match this fact. AI-assisted development occurred. See `docs/presentation_slides.md`.
++- **Photos:** legacy online Unsplash illustrations may not load on restricted networks. No licence is represented as verified. Replace before public deployment with sourced licensed visuals; the original local logo/backgrounds are retained. PT Sans falls back to available fonts if Google Fonts is blocked; font binaries are not included.
++
++## Tests
+ 
+ ```powershell
+ py -3 -m unittest discover -s tests -v
+ ```
+ 
+-Проверяются расчётные научные ответы (с фиктивными ответами API), сохранение фото, проверка формата, очистка метаданных, ограничения и локальная работа сервера. Упакованный проект не содержит личных пользовательских данных или предыдущей SQLite-базы.
++On Linux/macOS: `sh scripts/check_all.sh` (also checks JS syntax if Node is available).
++
++## Files of interest
++
++- `server.py` / `Dockerfile` / `render.yaml`: demo service and API.
++- `agro_calc.py`, `assistant_template.py`, `snapshots.py`: transparent calculations, deterministic response, real saved data fallback.
++- `js/research-demo.js`: NASA data, Climate Twin, labelled template assistant, method/validation disclosure.
++- `js/map-fallback.js`: non-crashing navigation when Leaflet fails.
++- `docs/presentation_slides.md`: slide drafts and evidence/caveats.
++- `docs/validation_report.md`: validation pending, reproducible comparison guide.
++
++## Known work still required before judging
++
++- Test all remote NASA endpoints and GIBS exact tile layers against current official capabilities on an Internet-connected device.
++- Obtain and retain real NASA/NOAA/NRCS snapshots; assess licensing of image sources.
++- Perform ground-station comparison for validity; correct Tajik translations with a native reviewer.
++- Test public HTTPS link, responsive UI and service cold starts; if externally distributed, do not rely on the stdlib development HTTP server alone.
++- Make data NASA-centric in more crop-specific outputs. Missing is better than invented.
+--- a/agro_calc.py
++++ b/agro_calc.py
+@@ -0,0 +1,97 @@
++"""Transparent agronomic indicators from **observed or modelled** daily weather.
++
++All results depend on the input data provenance. Calculations are NOT field
++measurements, fertiliser prescriptions, or planting-date recommendations.
++"""
++from __future__ import annotations
++from datetime import date
++from math import sqrt
++
++
++def is_valid(value):
++    """Reject NASA fill values, booleans, NaN, and unreal climate values."""
++    try:
++        v = float(value)
++        return value is not None and not isinstance(value, bool) and -900 < v < 100000 and v == v
++    except (TypeError, ValueError, OverflowError):
++        return False
++
++
++def gdd_day(tmax, tmin, base=10.0, ceiling=30.0):
++    """GDD=max(0, (clamp(Tmax,base,ceiling)+clamp(Tmin,base,ceiling))/2-base).
++
++    Corn example: 10/30 C (50/86 F), not a generic threshold for other crops.
++    Returns None when either day value is invalid.
++    """
++    if not (is_valid(tmax) and is_valid(tmin)): return None
++    if ceiling <= base: raise ValueError('ceiling must exceed base')
++    hi = min(ceiling, max(base, float(tmax)))
++    lo = min(ceiling, max(base, float(tmin)))
++    return max(0.0, (hi + lo) / 2.0 - base)
++
++
++def summarize_daily(parameters, year, *, base=10.0, ceiling=30.0, heat_threshold=30.0):
++    """Summarize real NASA POWER daily series; unknown values stay unknown."""
++    names = ('T2M_MAX','T2M_MIN','PRECTOTCORR','T2M')
++    if not all(isinstance(parameters.get(k), dict) for k in names):
++        raise ValueError('Missing required POWER daily parameters')
++    records = []
++    for ds, mx in sorted(parameters['T2M_MAX'].items()):
++        if not (ds.isdigit() and len(ds) == 8 and ds.startswith(str(year))): continue
++        try: when = date.fromisoformat(f'{ds[:4]}-{ds[4:6]}-{ds[6:8]}')
++        except ValueError: continue
++        mn=parameters['T2M_MIN'].get(ds)
++        rain=parameters['PRECTOTCORR'].get(ds)
++        avg=parameters['T2M'].get(ds)
++        rec={'date':when.isoformat(), 'doy':when.timetuple().tm_yday,
++             'tmax':float(mx) if is_valid(mx) else None,
++             'tmin':float(mn) if is_valid(mn) else None,
++             'temp':float(avg) if is_valid(avg) else None,
++             'rain':float(rain) if is_valid(rain) and float(rain)>=0 else None}
++        rec['gdd']=gdd_day(rec['tmax'],rec['tmin'],base,ceiling)
++        records.append(rec)
++    if not records: raise ValueError('No valid daily records in response')
++    growing=[r for r in records if 4 <= int(r['date'][5:7]) <= 9]
++    gd=[r['gdd'] for r in growing if r['gdd'] is not None]
++    p=[r['rain'] for r in growing if r['rain'] is not None]
++    heat=[r for r in growing if r['tmax'] is not None]
++    sp=[r['date'] for r in records if r['doy'] <= 182 and r['tmin'] is not None and r['tmin'] <= 0]
++    fa=[r['date'] for r in records if r['doy'] > 182 and r['tmin'] is not None and r['tmin'] <= 0]
++    means=[r['temp'] for r in growing if r['temp'] is not None]
++    result={
++      'year':year, 'growing_months':'April–September',
++      'gdd_corn_c':round(sum(gd),1) if gd else None,
++      'gdd_days':len(gd),
++      'rain_mm':round(sum(p),1) if p else None,
++      'rain_days':len(p),
++      'tmean_c':round(sum(means)/len(means),2) if means else None,
++      'temp_days':len(means),
++      'days_over_30c':sum(r['tmax']>heat_threshold for r in heat) if heat else None,
++      'heat_valid_days':len(heat),
++      'last_spring_frost':max(sp) if sp else None,
++      'first_autumn_frost':min(fa) if fa else None,
++      'frost_note':'Missing event does not prove absence of frost; check valid day coverage.',
++      'valid_days':len(records),
++      'coverage_fraction':round(len(records)/(366 if year%4==0 and (year%100!=0 or year%400==0) else 365),3),
++      'method':'Corn GDD: daily clamped max/min 10–30°C; frost: daily minimum ≤0°C; seasonal April–September; >30°C heat days.',
++      'record_type':'calculation-from-NASA-POWER-reanalysis',
++    }
++    return result
++
++
++def climate_twin(a,b):
++    """Heuristic, fully disclosed feature-distance score, NOT crop suitability.
++
++    Features: mean temperature (15°C scale), growing-season rainfall (400mm),
++    corn GDD (1200 degree-days), days above 30°C (60 days). Four features needed.
++    Similarity score = 100/(1 + euclidean weighted-normalized-distance).
++    Equal weighting is a demo methodological choice, not a calibrated model.
++    """
++    fs=[('tmean_c',15.0),('rain_mm',400.0),('gdd_corn_c',1200.0),('days_over_30c',60.0)]
++    if any(not(is_valid(a.get(k)) and is_valid(b.get(k))) for k,_ in fs):
++        return {'status':'insufficient-data','score':None}
++    parts=[{'metric':k,'a':a[k],'b':b[k],'scale':s,'normalized_delta':round((a[k]-b[k])/s,4)} for k,s in fs]
++    distance=sqrt(sum(x['normalized_delta']**2 for x in parts))
++    return {'status':'computed','score':round(100/(1+distance),1),'distance':round(distance,3),
++            'features':parts,'method':'Uncalibrated 100/(1+Euclidean distance); arbitrary display similarity, not agricultural transferability.',
++            'limits':'NASA gridded estimates; weather alone cannot establish agronomic equivalence.'}
+--- a/assistant_template.py
++++ b/assistant_template.py
+@@ -0,0 +1,36 @@
++"""Deterministic multilingual summaries; never presents a template as an LLM."""
++from __future__ import annotations
++from agro_calc import is_valid
++
++TEXT={
++ 'en':{'title':'Verified-data summary', 'none':'No verified climatic indicators are currently loaded.',
++       'source':'Data source: NASA POWER daily gridded estimates.',
++       'limits':'These are regional grid estimates, not measurements on the field.',
++       'review':'Check actual soil moisture and the crop stage on the plot before acting.',
++       'no_npk':'This service does not calculate fertilizer or pesticide prescriptions.'},
++ 'ru':{'title':'Сводка проверяемых данных','none':'Проверенные климатические показатели пока не загружены.',
++       'source':'Источник: суточные сеточные оценки NASA POWER.',
++       'limits':'Это региональные сеточные оценки, а не измерения на самом поле.',
++       'review':'Перед действиями проверьте фактическую влажность почвы и фазу развития культуры.',
++       'no_npk':'Сервис не назначает нормы удобрений и пестицидов.'},
++ 'tg':{'title':'Хулосаи маълумоти санҷишшаванда','none':'Нишондиҳандаҳои иқлимии санҷидашуда ҳанӯз бор нашудаанд.',
++       'source':'Манбаъ: баҳодиҳии шабакавии ҳаррӯзаи NASA POWER.',
++       'limits':'Инҳо баҳодиҳии минтақавӣ мебошанд, на ченкунии худи майдон.',
++       'review':'Пеш аз амал намии воқеии хок ва марҳилаи рушди зироатро тафтиш кунед.',
++       'no_npk':'Хизматрасонӣ меъёри нуриҳо ва пестисидҳоро таъин намекунад.'}
++}
++
++def summary(bundle,lang='en'):
++    lang=lang if lang in TEXT else 'en'; txt=TEXT[lang]
++    data=bundle.get('season') or {}
++    items=[]
++    # Deliberately no numeric claims in the summary. Numbers and their provenance are
++    # exposed in evidence_bundle separately to avoid ungrounded generated figures.
++    if data.get('valid_days'):
++        items.append(txt['source'])
++        items.append(txt['limits'])
++    else: items.append(txt['none'])
++    items.extend((txt['review'],txt['no_npk']))
++    return {'mode':'template','summary':' '.join(items),'key_points':items[:2],
++            'caveats':items[-2:],'sources':['NASA POWER'] if data.get('valid_days') else [],
++            'evidence_bundle':bundle}
+--- a/data/crop_thresholds.json
++++ b/data/crop_thresholds.json
+@@ -0,0 +1,11 @@
++{
++  "corn": {
++    "gdd_base_c": 10,
++    "gdd_ceiling_c": 30,
++    "source": "https://cropwatch.unl.edu/growing-degree-units-and-corn-emergence/",
++    "interpretation": "Common corn growing degree-day convention (50/86°F); verify local hybrid maturity and technique before use"
++  },
++  "wheat": {"gdd_base_c": null, "gdd_ceiling_c": null, "source": null},
++  "potato": {"gdd_base_c": null, "gdd_ceiling_c": null, "source": null},
++  "cotton": {"gdd_base_c": null, "gdd_ceiling_c": null, "source": null}
++}
+--- a/data_snapshots/README.md
++++ b/data_snapshots/README.md
+@@ -0,0 +1,8 @@
++# NASA/NOAA/USDA snapshots
++
++This directory ships **without fabricated measurements**. Run
++`python scripts/refresh_snapshots.py` with Internet access to save genuine API
++responses. Files are generated only after successful upstream parsing. A missing
++snapshot is shown as **unavailable**, never replaced by arbitrary numbers.
++
++On a deployment platform, commit only reviewed, clearly dated data snapshots.
+--- a/docs/presentation_slides.md
++++ b/docs/presentation_slides.md
+@@ -0,0 +1,26 @@
++# Presentation-ready, verified-claim-safe slide notes
++
++## Use of AI
++- AI coding assistance has been used during development; all generated code and translations need team review.
++- The site reads NASA POWER/ORNL data through documented APIs; satellite measurements **are not** AI-generated.
++- Growing-degree-days and climate similarity are deterministic calculations, not AI forecasts.
++- Current assistant is **template mode** and labels itself accordingly. No LLM provider is configured; do NOT describe it as an autonomous AI advisor.
++- AI imagery and stock imagery must be identified per image after team licence verification.
++
++## NASA data used
++- NASA POWER Daily Point API: historical daily T2M, Tmax/Tmin, precipitation; derived GDD and frost indicators. Requires live network.
++- NASA GIBS: MODIS Terra true-colour historical tile overlay, accessible when CDN/maps are available; not an NDVI value.
++- NASA ORNL DAAC MODIS MOD13Q1: experimental point NDVI series; 250m mixed pixels and QA flags have not been validated.
++
++## Validity
++- GDD: clamp Tmax/Tmin to 10–30 °C and sum max(0, (Tmax+Tmin)/2 − 10) for corn.
++- Frost indicator: daily minimum ≤0 °C; spatial grid versus actual field conditions must be checked.
++- Ground-station bias/MAE/RMSE **not measured yet**. Source comparison remains pending.
++
++## Creativity
++- Climate Twin compares transparent scaled features from real NASA model estimates at an official US research station and a labelled Tajik regional reference point. It is an **uncalibrated heuristic**, not crop suitability.
++
++## Impact
++- Accessible, public agronomic data exploration with no login and transparent limitations.
++- Pilot: South Central Agricultural Laboratory reference point in Nebraska.
++- Never claim improved yield, verified farm-scale NDVI or calculated fertilizer application rates.
+--- a/docs/validation_report.md
++++ b/docs/validation_report.md
+@@ -0,0 +1,15 @@
++# Validation status — AAIAP v0.1.1-demo
++
++**NOT YET VALIDATED AGAINST A GROUND STATION.**
++
++The daily NASA POWER meteorological data are gridded / model-based; they are not measurements at a Nebraska research plot. No verified ground-station comparisons for the published coordinates have been collected in this offline build environment. Consequently there are **no claimed bias, MAE, RMSE or correlation values**.
++
++## Reproduction plan
++1. Obtain daily NASA POWER point data for 2025 at the site reference coordinates.
++2. Obtain Nebraska Mesonet or NOAA station observations at a documented, nearby station under the provider's licence, with site ID and coordinates.
++3. Harmonise units, timezone, local solar day and missing value conventions.
++4. Align overlapping daily dates (do not fill missing days); aggregate monthly values only when coverage is adequate.
++5. Compute bias (POWER - station), MAE and RMSE for temperature and precipitation separately, and report sample count and time coverage.
++6. Publish the station name, source URL, access date, findings and caveats.
++
++The attached `scripts/validate_power.py` accepts **two reviewed CSV files** and computes metrics; it does not fabricate station readings.
+--- a/index.html
++++ b/index.html
+@@ -16,7 +16,7 @@
+   <div class="header-actions">
+    <button id="backToPortal" type="button" class="pill-btn solid"><span data-icon="arrowLeft"></span><span data-i18n="map.back"></span></button>
+    <button id="roleToggle" hidden></button>
+-   <span class="live-dot" aria-hidden="true"></span><span class="desktop-only">RESEARCH GIS · 0.0.6</span>
++   <span class="live-dot" aria-hidden="true"></span><span class="desktop-only">RESEARCH GIS · 0.1.1-demo</span>
+    <div class="lang-switch" role="group" data-i18n-attr="aria-label:lang.aria"><button type="button" data-lang-btn="en">EN</button><button type="button" data-lang-btn="ru">RU</button><button type="button" data-lang-btn="tg">TJ</button></div>
+    <button type="button" id="photoAdminOpen" class="round-btn photo-settings-trigger" title="Редактор главных фотографий (администратор)" aria-label="Редактор фотографий"><span aria-hidden="true">📷</span></button>
+    <button type="button" class="round-btn js-theme" data-i18n-attr="title:theme.toggle;aria-label:theme.toggle"><span class="theme-icon"></span></button>
+@@ -27,7 +27,7 @@
+   <button id="worldBtn" type="button"><span data-icon="globe"></span><span data-i18n="map.world"></span></button>
+   <button id="nebraskaBtn" type="button"><span data-icon="pin"></span><span>Nebraska</span></button>
+   <button id="tajikBtn" type="button"><span data-icon="pin"></span><span data-i18n="map.tj"></span></button>
+-  <button id="layersBtn" type="button"><span data-icon="layers"></span><span data-i18n="map.layers"></span></button>
++  <button id="gibsBtn" type="button" aria-pressed="false" title="NASA GIBS true-color layer">🛰 NASA GIBS</button><button id="layersBtn" type="button"><span data-icon="layers"></span><span data-i18n="map.layers"></span></button>
+   <button id="contoursBtn" type="button" aria-pressed="true"><span data-icon="contour"></span><span id="contoursLabel" data-i18n="map.cOn"></span></button>
+   <label class="upload-btn" data-i18n-attr="title:map.importTitle"><span data-icon="upload"></span><span data-i18n="map.import"></span><input id="geojsonInput" type="file" accept=".geojson,.json,application/geo+json,application/json" hidden></label>
+  </div>
+@@ -44,7 +44,7 @@
+ <div id="portal" class="portal" aria-live="polite">
+  <header class="sitebar">
+   <button class="identity" id="homeBrand" type="button" data-i18n-attr="aria-label:home.aria"><span class="logo-mark"><img src="./assets/logo.png" alt="" width="48" height="48"></span><span class="idtext"><strong>AgroSupport</strong><small data-i18n="brand.sub"></small></span></button>
+-  <nav class="site-nav" data-i18n-attr="aria-label:nav.aria"><button data-nav="welcome" type="button" data-i18n="nav.start"></button><button data-nav="catalog" type="button" data-i18n="nav.crops"></button><button data-nav="map" type="button"><span data-i18n="nav.map"></span><span data-icon="arrowUpRight" data-size="15"></span></button></nav>
++  <nav class="site-nav" data-i18n-attr="aria-label:nav.aria"><button data-nav="welcome" type="button" data-i18n="nav.start"></button><button data-nav="catalog" type="button" data-i18n="nav.crops"></button><button data-nav="methodology" type="button" aria-label="Methodology and AI transparency">Science & AI</button><button data-nav="map" type="button"><span data-i18n="nav.map"></span><span data-icon="arrowUpRight" data-size="15"></span></button></nav>
+   <div class="site-tools">
+    <div class="lang-switch" role="group" data-i18n-attr="aria-label:lang.aria"><button type="button" data-lang-btn="en">EN</button><button type="button" data-lang-btn="ru">RU</button><button type="button" data-lang-btn="tg">TJ</button></div>
+    <button type="button" id="photoAdminOpen" class="round-btn photo-settings-trigger" title="Редактор главных фотографий (администратор)" aria-label="Редактор фотографий"><span aria-hidden="true">📷</span></button>
+@@ -63,7 +63,7 @@
+ </div>
+ <div id="toast" role="status" aria-live="polite" class="toast" hidden></div>
+ <script>try{localStorage.setItem('aaiap-role','farmer')}catch(e){}</script>
+-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
++<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" onerror="var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js';document.head.appendChild(s)"></script>
+ <script type="module" src="./js/main.js"></script>
+ <script type="module" src="./js/portal.js"></script>
+ </body></html>
+--- a/js/main.js
++++ b/js/main.js
+@@ -1,4 +1,5 @@
+ import {sites} from './sites.js';
++import {initMapFallback} from './map-fallback.js';
+ import {createExperience} from './experience.js';
+ import {loadWorld,loadTajikRegions} from './geography.js';
+ import {createFieldLayer} from './fields.js';
+@@ -6,10 +7,14 @@
+ import {siteName,siteRegion,siteCrop,siteSoil,siteArea,siteMoist,siteNdvi,sitePh,siteTemp} from './site-format.js';
+ import './shell.js';
+ const $=id=>document.getElementById(id);
+-if(typeof L==='undefined'){$('mapHint').textContent=tt('leaflet.fail');throw new Error('Leaflet CDN unavailable')}
++if(typeof L==='undefined'){initMapFallback()}else{initMap()}
++function initMap(){
+ const map=L.map('map',{zoomControl:false,worldCopyJump:true,minZoom:2,maxZoom:15}).setView([24,20],2);
+ L.control.zoom({position:'topright'}).addTo(map);
+ const base=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(map);
++let osmErrors=0;
++base.on('tileerror',()=>{if(++osmErrors===4){const h=$('mapHint');if(h)h.textContent='Basemap tiles unavailable / Нет картографических тайлов / Қабатҳои харита дастнорасанд. Use map markers and catalog.'}});
++window.addEventListener('aaiap-map-shown',()=>setTimeout(()=>map.invalidateSize({pan:false}),120));
+ // Satellite layer is optional. Esri imagery is a third-party service and may be unavailable.
+ const satellite=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:18,attribution:'Imagery © Esri and providers'});
+ let satelliteOn=false,worldLayer=null,regionLayer=null,activeSite=null;
+@@ -41,9 +46,25 @@
+ $('contoursBtn').addEventListener('click',()=>{contoursEnabled=!contoursEnabled;paintContoursBtn();updateSiteVisibility()});
+ $('geojsonInput').addEventListener('change',async event=>{const file=event.target.files?.[0];if(!file)return;try{if(file.size>5_000_000)throw new Error(tt('imp.big'));const json=JSON.parse(await file.text());const n=fieldLayer.importGeoJSON(json);msg.contour={key:'imp.ok',params:{n}};updateSiteVisibility();if(activeSite)fillSite(activeSite)}catch(error){msg.contour={key:'imp.err',params:{m:error.message}};console.warn(error)}finally{paintMsg();event.target.value=''}});
+ $('worldBtn').addEventListener('click',worldView);$('nebraskaBtn').addEventListener('click',()=>{closePanels();map.flyTo([40.575256,-98.137824],11,{duration:1.2})});$('tajikBtn').addEventListener('click',tajikView);
++// NASA GIBS MODIS Terra true-color: external NASA WMTS; not a numerical NDVI observation.
++// Source and date are explicitly exposed; availability checked via tile events.
++let gibsLayer=null;
++$('gibsBtn')?.addEventListener('click',()=>{
++ const btn=$('gibsBtn'); if(gibsLayer){map.removeLayer(gibsLayer);gibsLayer=null;btn.setAttribute('aria-pressed','false');hint('map.hintWorld');return}
++ const date='2025-07-15'; // historical date; check NASA GIBS GetCapabilities online before relying on it.
++ const url=`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${date}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`;
++ gibsLayer=L.tileLayer(url,{maxNativeZoom:9,maxZoom:16,opacity:0.82,
++    attribution:'NASA GIBS / MODIS Terra · 2025-07-15 · satellite true-color (not field NDVI)'});
++ let errors=0;
++ gibsLayer.on('tileerror',()=>{if(++errors===3){btn.title='NASA tiles unavailable; turn off GIBS';btn.classList.add('source-error');}});
++ gibsLayer.addTo(map);btn.setAttribute('aria-pressed','true');btn.title='NASA GIBS MODIS Terra · 2025-07-15 · true color (not NDVI)';
++ if(worldLayer)worldLayer.bringToFront();if(map.hasLayer(markers))markers.bringToFront?.();
++});
+ $('layersBtn').addEventListener('click',()=>{if(satelliteOn){map.removeLayer(satellite);base.addTo(map)}else{map.removeLayer(base);satellite.addTo(map)}satelliteOn=!satelliteOn;$('map').classList.toggle('is-satellite',satelliteOn);if(worldLayer)worldLayer.bringToFront();if(regionLayer)regionLayer.bringToFront();if(map.hasLayer(markers))markers.bringToFront?.()});
+ document.querySelectorAll('[data-close]').forEach(btn=>btn.addEventListener('click',closePanels));
+ loadWorld(map,(feature,layer)=>{const p=feature.properties||{};const name=p.name||p.ADMIN||'';if(/tajikistan/i.test(name)){tajikView()}else{closePanels();map.flyToBounds(layer.getBounds(),{padding:[45,45],maxZoom:6,duration:1.2});hint('map.hintCountry',{name})}}).then(layer=>{worldLayer=layer;status('lg.ok1')}).catch(err=>{status('lg.fail1');console.warn('World boundaries:',err)});
+ loadTajikRegions(map,(name,layer)=>{closePanels();map.flyToBounds(layer.getBounds(),{padding:[55,55],maxZoom:9,duration:1.2});hint('map.hintRegion',{name})}).then(layer=>{regionLayer=layer;status('lg.ok2')}).catch(err=>{status('lg.fail2');console.warn('Tajik regions:',err)});
+ // Re-render everything that was written in JS when the language changes.
+ onLang(()=>{paintMsg();paintContoursBtn();buildMarkers();fieldLayer.refresh();updateSiteVisibility();if(activeSite)fillSite(activeSite)});
++
++}
+--- a/js/map-fallback.js
++++ b/js/map-fallback.js
+@@ -0,0 +1,21 @@
++import {sites} from './sites.js';
++import {getLang} from './i18n.js';
++const labels={en:['Map engine unavailable','The interactive map could not load. You can still explore the research sites.', 'Open Nebraska crops','Tajikistan — regional reference only','Explore NASA data from the crop catalogue'],ru:['Карта временно недоступна','Картографический движок не загрузился. Можно открыть площадки без карты.', 'Открыть растения Небраски','Таджикистан — только региональные точки','Данные NASA доступны в каталоге культур'],tg:['Харита муваққатан дастнорас аст','Муҳаррики харита бор нашуд. Майдонҳоро бе харита низ дидан мумкин аст.','Зироатҳои Небраскаро кушоед','Тоҷикистон — танҳо нуқтаҳои минтақавӣ','Маълумоти NASA дар феҳрист дастрас аст']};
++export function initMapFallback(){
++ const map=document.getElementById('map'); if(!map)return;
++ const lang=getLang(); const words=labels[lang]||labels.en;
++ map.classList.add('fallback-map');
++ map.innerHTML=`<div class="map-fallback-pane" role="region" aria-label="Fallback research sites">
++ <div class="fallback-globe" aria-hidden="true">◉</div><div class="map-fallback-copy">
++ <p class="eyebrow">AAIAP GIS · OFFLINE FALLBACK</p><h2>${words[0]}</h2><p>${words[1]}</p>
++ <button type="button" id="fallbackNebraska">🇺🇸 ${words[2]}</button>
++ <p>🇹🇯 ${words[3]}</p><small>${words[4]}</small>
++ <div class="fallback-site-list">${sites.filter(s=>s.id==='USA-NE-SCAL').map(s=>`<span>${s.id} · ${s.lat}, ${s.lon}</span>`).join('')}</div></div></div>`;
++ document.getElementById('fallbackNebraska')?.addEventListener('click',()=>{
++  document.querySelector('#backToPortal')?.click();
++  document.querySelector('[data-nav="catalog"]')?.click();
++ });
++ document.querySelectorAll('.map-actions button, .map-actions label').forEach(e=>e.disabled=true);
++ document.getElementById('boundaryStatus')?.replaceChildren(document.createTextNode(words[0]));
++ console.warn('AAIAP GIS: Leaflet unavailable, showing functional catalogue fallback');
++}
+--- a/js/portal.js
++++ b/js/portal.js
+@@ -5,6 +5,7 @@
+ import './shell.js';
+ import {setBackground} from './backgrounds.js';
+ import {cropPhoto,cropPhotoPosition,refreshCropPhotos} from './photo-admin.js';
++import {researchTab,metadataView,handleResearchAction,exportResearchCSV,refreshResearchStatic} from './research-demo.js';
+ 
+ const $=id=>document.getElementById(id);
+ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+@@ -98,15 +99,17 @@
+  const data=await response.json();if(!response.ok)throw Error(data.error||'Source unavailable');return data}
+ function toast(message){const e=$('toast');e.textContent=message;e.hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>e.hidden=true,4000)}
+ 
+-async function start(){try{const info=await api('/sites');state.sites=info.sites||[];state.farm=state.sites[0]||null;}catch(e){state.sites=[];state.farm=null;state.errors.sites=e.message;}try{await refreshCropPhotos();}catch(e){console.warn('Main photos unavailable',e);}render()}
++async function start(){
++ try{const mode=await api('/health');if(mode.mode==='cloud-demo'){document.body.classList.add('cloud-demo')}}catch{}
++ try{const info=await api('/sites');state.sites=info.sites||[];state.farm=state.sites[0]||null;}catch(e){state.sites=[];state.farm=null;state.errors.sites=e.message;}try{await refreshCropPhotos();}catch(e){console.warn('Main photos unavailable',e);}render()}
+ function setView(view){state.view=view;render();$('portal')?.scrollTo({top:0,behavior:'instant'});}
+ function welcome(){const site=state.farm;
+- return `<main class="welcome-layout"><section class="welcome-left"><div class="superlabel"><span class="pulse-dot"></span> ${t('w.label')}</div><div class="welcome-copy"><span class="welcome-count">01 / NEBRASKA PILOT</span><h1>${t('w.h1a')}<br><em>${t('w.h1b')}</em><br>${t('w.h1c')}</h1><p>${m('startText')}</p></div><div class="who-card"><h2>${t('w.who')}</h2><button class="role-active" type="button" aria-pressed="true"><span class="role-symbol">${icon('sprout',22)}</span><span class="role-text"><strong>${t('role.farmer')}</strong><small>${t('role.farmer.d')}</small></span><span class="tiny-check">${icon('check',18)}</span></button><button class="role-locked" disabled type="button"><span class="role-symbol">${icon('flask',22)}</span><span class="role-text"><strong>${t('role.expert')}</strong><small>${t('role.expert.d')}</small></span><span class="soon-tag">${t('soon')}</span></button></div><div class="welcome-bottom">${t('w.bottom')} <span>v0.0.6</span></div></section>
++ return `<main class="welcome-layout"><section class="welcome-left"><div class="superlabel"><span class="pulse-dot"></span> ${t('w.label')}</div><div class="welcome-copy"><span class="welcome-count">01 / NEBRASKA PILOT</span><h1>${t('w.h1a')}<br><em>${t('w.h1b')}</em><br>${t('w.h1c')}</h1><p>${m('startText')}</p></div><div class="who-card"><h2>${t('w.who')}</h2><button class="role-active" type="button" aria-pressed="true"><span class="role-symbol">${icon('sprout',22)}</span><span class="role-text"><strong>${t('role.farmer')}</strong><small>${t('role.farmer.d')}</small></span><span class="tiny-check">${icon('check',18)}</span></button><button class="role-locked" disabled type="button"><span class="role-symbol">${icon('flask',22)}</span><span class="role-text"><strong>${t('role.expert')}</strong><small>${t('role.expert.d')}</small></span><span class="soon-tag">${t('soon')}</span></button></div><div class="welcome-bottom">${t('w.bottom')} <span>v0.1.1-demo</span></div></section>
+  <section class="welcome-right"><div class="setup-head"><span>${t('setup.label')}</span><strong>${m('title')}</strong><p>${m('access')}</p></div>
+  <div class="step-selector">${orb(1)}<div><label>${m('country')}</label><div class="fixed-choice">🇺🇸 United States</div></div></div>
+  <div class="step-selector">${orb(2)}<div><label>${m('region')}</label><div class="fixed-choice">${m('state')} · ${m('location')}</div></div></div>
+  <div class="step-selector step-farm">${orb(3)}<div><label>${m('site')}</label><div class="farm-options">${site?`<button type="button" data-action="enter" class="farm-option picked"><span class="farm-text"><strong>${esc(site.name)}</strong><small>Clay County · ${m('context')}</small></span><span class="option-arrow">${icon('check',16)}</span></button>`:`<p class="empty-row">${m('error')}</p>`}</div></div></div>
+- <div class="setup-footer"><button id="enterCatalog" class="hero-go" type="button" ${!site?'disabled':''}>${m('open')} ${icon('arrowRight',18)}</button><p>${m('public')} · ${m('readOnly')}</p></div></section></main>`;
++ <div class="setup-footer"><button id="enterCatalog" class="hero-go" type="button" ${!site?'disabled':''}>${m('open')} ${icon('arrowRight',18)}</button><button type="button" data-action="openDemo" class="demo-quicklink">NASA DEMO / 🌽 Corn ↗</button><p>${m('public')} · ${m('readOnly')}</p></div></section></main>`;
+ }
+ function locbar(){return `<div class="locbar"><button class="loc-change" data-view="welcome"><span class="loc-back">${icon('arrowLeft',16)}</span>${t('loc.change')}</button><span class="loc-path"><span class="loc-chip"><span class="loc-code">US</span> USA</span><span class="loc-sep"></span><span class="loc-chip current">${icon('pin',16)} Nebraska · Clay Center</span></span></div>`}
+ function catalog(){return `<main class="content-shell">${locbar()}<section class="catalog-hero"><div class="catalog-headline"><span class="overline">${t('cat.over')}</span><h1>${t('cat.h1a')}<br><em>${t('cat.h1b')}</em></h1><p>${m('unranked')}</p></div><div class="farm-status"><span class="tag-small">UNL / RESEARCH</span><h2>${esc(fieldName())}</h2><p>Harvard, Nebraska · Clay County</p><div class="status-line"><span class="state-dot owned"></span><strong>${m('public')}</strong></div><p class="farm-area">${m('noArea')}</p><small>${m('context')}</small></div></section>
+@@ -119,11 +122,11 @@
+  $('countLabel').innerHTML=`${orb(items.length)}<span>${t('crops.count')}</span>`;
+  host.innerHTML=items.map(c=>`<article class="crop-card"><button data-crop="${c.id}" type="button"><span class="crop-orb"><img src="${esc(cropPhoto(c))}" style="object-position:${cropPhotoPosition(c)}" loading="lazy" alt=""><span class="num orb-num">${String(cropList.indexOf(c)+1).padStart(2,'0')}</span></span><span class="crop-category">${t('cat.'+c.cat)}</span><h3>${esc(nm(c))}</h3><p class="latin">${esc(c.latin)}</p><span class="crop-flag ${preferred.includes(c.id)?'on':''}">${preferred.includes(c.id)?m('documentedTag'):m('unranked')}</span><span class="crop-bottom">${t('card.open')} ${icon('arrowUpRight',16)}</span></button></article>`).join('')
+ }
+-const cropTabs=['about','land','npk','irrigation','weather','data','aaiap'];
+-const tabTitle=id=>({about:m('about'),land:m('land'),npk:m('npk'),irrigation:m('irrigation'),weather:m('weather'),data:m('data'),aaiap:m('ai')}[id]);
++const cropTabs=['about','land','npk','irrigation','weather','data','nasa','aaiap'];
++const tabTitle=id=>({about:m('about'),land:m('land'),npk:m('npk'),irrigation:m('irrigation'),weather:m('weather'),data:m('data'),nasa:['NASA data','Данные NASA','Маълумоти NASA'][['en','ru','tg'].indexOf(getLang())],aaiap:'AAIAP'}[id]);
+ function cropDetail(){const crop=activeCrop();const site=state.farm;
+  return `<main class="content-shell crop-detail">${locbar()}<div class="crop-breadcrumb"><button data-view="catalog" type="button">${icon('arrowLeft',16)} ${m('back')}</button><span class="crumb-now">${esc(cropName(crop))}</span></div><section class="crop-header"><div class="crop-header-copy"><span class="overline">NEBRASKA / ${esc(t('cat.'+crop.cat)).toUpperCase()}</span><h1>${esc(cropName(crop))}</h1><p class="latin">${esc(crop.latin)}</p><p class="crop-desc">${esc(cropDesc(crop))}</p><span class="img-credit">${t('img.credit')}</span><div class="crop-meta"><span>${icon('pin',15)} Nebraska</span><span>${icon('field',15)} SCAL · Clay Center</span><span class="viewer-pill">${icon('eye',15)} ${m('public')}</span></div></div></section>
+- <section class="tool-layout"><div class="tool-primary"><nav class="crop-tabs" aria-label="Crop sections">${cropTabs.map(k=>`<button data-tab="${k}" type="button" class="${state.tab===k?'active':''}" ${k==='aaiap'?'disabled title="Coming later"':''}>${esc(tabTitle(k))}${k==='aaiap'?` <span class="lock-small">${t('soon')}</span>`:''}</button>`).join('')}</nav><div id="tabArea" class="tab-area">${tabContent()}</div></div><aside class="tool-aside"><div class="aside-label">UNL · NEBRASKA</div><h3>${esc(fieldName())}</h3><p>40.575256° N · 98.137824° W</p><div class="aside-line"><span>${m('site')}</span><strong>${m('public')}</strong></div><div class="aside-line"><span>${t('area')}</span><strong>${m('unknown')}</strong></div><div class="aside-note">${m('context')}</div><a class="map-link" href="https://scal.unl.edu/location/" target="_blank" rel="noopener noreferrer">${icon('arrowUpRight',16)} UNL ${m('source')}</a><button data-nav="map" class="map-link">${icon('globe',16)} ${t('nav.map')}</button></aside></section></main>`;
++ <section class="tool-layout"><div class="tool-primary"><nav class="crop-tabs" aria-label="Crop sections">${cropTabs.map(k=>`<button data-tab="${k}" type="button" class="${state.tab===k?'active':''}">${esc(tabTitle(k))}</button>`).join('')}</nav><div id="tabArea" class="tab-area">${tabContent()}</div></div><aside class="tool-aside"><div class="aside-label">UNL · NEBRASKA</div><h3>${esc(fieldName())}</h3><p>40.575256° N · 98.137824° W</p><div class="aside-line"><span>${m('site')}</span><strong>${m('public')}</strong></div><div class="aside-line"><span>${t('area')}</span><strong>${m('unknown')}</strong></div><div class="aside-note">${m('context')}</div><a class="map-link" href="https://scal.unl.edu/location/" target="_blank" rel="noopener noreferrer">${icon('arrowUpRight',16)} UNL ${m('source')}</a><button data-nav="map" class="map-link">${icon('globe',16)} ${t('nav.map')}</button></aside></section></main>`;
+ }
+ function input(label,key,unit){const n=state.draft[key];return `<label class="field-input"><span>${label}</span><div class="input-unit"><input data-plan="${key}" type="number" min="0" step="any" inputmode="decimal" value="${n===null||n===undefined?'':esc(n)}" placeholder="—"><span>${unit}</span></div></label>`}
+ function compute(){const p=state.draft,a=moneyNumber(p.field_ha),x=moneyNumber(p.planted_ha),y=moneyNumber(p.extra_ha),total=(x===null||y===null)?null:x+y;
+@@ -172,6 +175,7 @@
+  return photos.map(row=>`<figure class="community-photo"><img loading="lazy" src="${esc(row.url)}" alt="${esc(m('photoLabel'))}"><figcaption>${esc(m('photoLabel'))} · ${esc(row.uploaded_at?.slice(0,10)||'')}</figcaption></figure>`).join('');
+ }
+ function renderCommunityGallery(){
++ if(document.body.classList.contains('cloud-demo'))return '';
+  return `<section class="community-gallery" aria-labelledby="communityGalleryHeading"><header class="community-gallery-head"><div><span class="overline">AAIAP · COMMUNITY</span><h3 id="communityGalleryHeading">${m('farmerPhotos')}</h3><p>${m('farmerNotice')}</p></div></header>
+  <div class="community-photos" id="communityPhotos">${galleryPhotosHtml(state.cropId)}</div>
+  <div class="community-upload"><label for="communityPhotoFile">${m('photoAdd')}</label><input id="communityPhotoFile" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"><small class="community-upload-note">${m('photoRule')}</small>
+@@ -205,11 +209,13 @@
+  if(['land','npk','irrigation'].includes(state.tab))return calculator(state.tab);
+  if(state.tab==='weather')return `<div class="tab-topline"><span class="overline">NOAA / NWS</span><h2>${m('weather')}</h2><p>${m('local')}</p></div><button data-load="forecast" class="hero-go live-load">${m('load')} ${icon('arrowRight',16)}</button><div id="liveData">${liveView('forecast')}</div>`;
+  if(state.tab==='data')return dataExplorer();
+- return `<div class="pending-card"><span class="pending-orb">${icon('spark',28)}</span><h2>AAIAP</h2><p>${t('ai.p')}</p></div>`;
++ if(state.tab==='nasa'||state.tab==='aaiap')return researchTab(state.tab);
++ return `<div class="pending-card"><h2>AAIAP</h2></div>`;
+ }
+ function render(){const host=$('portalContent');if(!host)return;
+- host.innerHTML=state.view==='welcome'?welcome():state.view==='catalog'?catalog():cropDetail();
++ host.innerHTML=state.view==='welcome'?welcome():state.view==='catalog'?catalog():state.view==='methodology'?metadataView():cropDetail();
+  setBackground(state.view,state.cropId);
++ refreshResearchStatic();
+  if(state.view==='catalog')renderCatalogGrid();
+  document.querySelectorAll('[data-nav]').forEach(b=>b.classList.toggle('current',b.dataset.nav===state.view||(b.dataset.nav==='catalog'&&state.view==='crop')));
+ }
+@@ -218,11 +224,14 @@
+  catch(e){state.errors[id]=e.message;}
+  finally{state.busy[id]=false;render();}
+ }
+-function showMap(){$('portal').hidden=true;document.body.classList.add('map-visible');window.dispatchEvent(new Event('resize'));}
++function showMap(){$('portal').hidden=true;document.body.classList.add('map-visible');window.dispatchEvent(new Event('resize'));window.dispatchEvent(new Event('aaiap-map-shown'));}
+ function showPortal(){$('portal').hidden=false;document.body.classList.remove('map-visible');render();}
+ $('backToPortal')?.addEventListener('click',showPortal);
+ $('homeBrand')?.addEventListener('click',()=>setView('welcome'));
+ document.addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;
++ if(b.dataset.research){await handleResearchAction(b,state.farm?.id,state.cropId);return}
++ if(b.dataset.researchExport){exportResearchCSV(b.dataset.researchExport);return}
++ if(b.dataset.action==='openDemo'){state.cropId='corn';state.tab='nasa';state.draft=retrievePlan();setView('crop');return}
+  if(b.dataset.nav){if(b.dataset.nav==='map')showMap();else setView(b.dataset.nav==='catalog'&&!state.farm?'welcome':b.dataset.nav);return;}
+  if(b.dataset.view){setView(b.dataset.view);return}
+  if(b.dataset.action==='enter'||b.id==='enterCatalog'){if(state.farm)setView('catalog');return}
+--- a/js/research-demo.js
++++ b/js/research-demo.js
+@@ -0,0 +1,62 @@
++/* NASA transparency module: all numeric metrics supplied by real endpoints.
++   Never substitute invented values when APIs or snapshots are unavailable. */
++import {getLang} from './i18n.js';
++const T={
++ en:{nasa:'NASA Data & calculations',intro:'Explore dated NASA model estimates, NASA MODIS vegetation observations, and transparent derived indicators. Nothing here is a measurement on the farm.',season:'Season indicators',modis:'MODIS NDVI',twin:'Climate Twin',assistant:'AAIAP Assistant',load:'Load verified data',loading:'Contacting official source…',empty:'No data loaded yet. Click a source to load.',unavailable:'Source unavailable. No values substituted.',period:'Reference year',gdd:'Corn GDD (April–September)',rain:'Seasonal rainfall',hot:'Days above 30°C',frost:'Last spring frost',data:'Evidence source',caveat:'Limits',source:'Source',date:'Retrieved',snapshot:'Offline snapshot: real saved response, not live',notlive:'Offline / provisional',how:'Where AI is used',model:'NASA model / reanalysis',calculation:'AAIAP deterministic calculation',notField:'Not a direct field measurement',explain:'Methodology',review:'Validation',aiNone:'No AI provider is configured. A deterministic, labelled template summarizes available evidence.',twinWarning:'Climate similarity is an uncalibrated comparison, NOT suitability of farming practices.',modisWarning:'Approx. 250m mixed pixels; quality flags have not been filtered. Use as preliminary exploration only.',csv:'Export CSV',demo:'Open NASA demo — corn',science:'Science & AI',coverage:'Data coverage',similarity:'Climate similarity (heuristic)',distance:'Scaled distance',pixels:'Pixels',aiActual:'AI used'},
++ ru:{nasa:'Данные NASA и расчёты',intro:'Датированные модельные оценки NASA, данные MODIS о растительности и прозрачные расчёты. Это не измерения непосредственно на поле.',season:'Сезонные показатели',modis:'NDVI MODIS',twin:'Климатический двойник',assistant:'Помощник AAIAP',load:'Загрузить реальные данные',loading:'Запрос к источнику…',empty:'Данные пока не загружены. Выберите источник.',unavailable:'Источник недоступен. Условные значения не подставлены.',period:'Отчётный год',gdd:'Сумма GDD кукурузы (апрель–сентябрь)',rain:'Осадки за сезон',hot:'Дней выше 30 °C',frost:'Последний весенний заморозок',data:'Основание вывода',caveat:'Ограничения',source:'Источник',date:'Дата получения',snapshot:'Офлайн-снимок: сохранённый реальный ответ, не текущий',notlive:'Нет текущих данных',how:'Где используется ИИ',model:'Модель / реанализ NASA',calculation:'Расчёт AAIAP по формуле',notField:'Не измерение на конкретном поле',explain:'Методология',review:'Валидация',aiNone:'Провайдер ИИ не настроен. Доступно детерминированное шаблонное резюме с честной пометкой.',twinWarning:'Климатическое сходство — некалиброванное сравнение, НЕ доказательство пригодности агротехники.',modisWarning:'Пиксели около 250 м, возможная смесь покрытий; контроль качества ещё не выполнен. Только предварительный анализ.',csv:'Экспорт CSV',demo:'Открыть демо NASA — кукуруза',science:'Наука и ИИ',coverage:'Полнота данных',similarity:'Сходство климата (эвристика)',distance:'Нормированная дистанция',pixels:'Пиксели',aiActual:'ИИ используется'},
++ tg:{nasa:'Маълумоти NASA ва ҳисобҳо',intro:'Баҳодиҳии моделии таърихии NASA, мушоҳидаҳои MODIS ва ҳисобҳои шаффоф. Ин ченкунии бевоситаи майдон нест.',season:'Нишондиҳандаҳои мавсим',modis:'NDVI MODIS',twin:'Ҳамтои иқлимӣ',assistant:'Ёвари AAIAP',load:'Маълумоти воқеиро бор кунед',loading:'Дархост ба манбаъ…',empty:'Ҳоло маълумот нест. Манбаъро интихоб кунед.',unavailable:'Манбаъ дастнорас аст. Рақамҳои сохта истифода намешаванд.',period:'Соли маълумот',gdd:'Ҷамъи GDD-и ҷуворимакка (апрел–сентябр)',rain:'Боришоти мавсим',hot:'Рӯзҳои аз 30 °C боло',frost:'Сардиҳои охирини баҳор',data:'Манбаи далел',caveat:'Маҳдудиятҳо',source:'Манбаъ',date:'Санаи гирифтани маълумот',snapshot:'Нусхаи ҳифзшудаи воқеӣ, на маълумоти зинда',notlive:'Маълумоти ҷорӣ нест',how:'Зеҳни сунъӣ дар куҷо истифода мешавад',model:'Модел / реанализи NASA',calculation:'Ҳисоби формулаи AAIAP',notField:'На ченкунии майдони мушаххас',explain:'Усулшиносӣ',review:'Санҷиши дурустӣ',aiNone:'Провайдери AI танзим нашудааст. Хулосаи қолабии бо нишондоди дуруст дастрас аст.',twinWarning:'Монандии иқлим — муқоисаи бетаҳқиқ, на далели мувофиқати агротехника.',modisWarning:'Пикселҳои тақрибан 250 м, омехтаи сарпӯш; назорати сифат ҳоло иҷро нашудааст. Танҳо таҳлили пешакӣ.',csv:'CSV-ро боргирӣ кунед',demo:'Демои NASA — ҷуворимакка',science:'Илм ва AI',coverage:'Пуррагии маълумот',similarity:'Монандии иқлим (эвристикӣ)',distance:'Масофаи меъёрӣ',pixels:'Пикселҳо',aiActual:'Истифодаи AI'}
++};
++const v=(k)=> (T[getLang()]||T.en)[k]||k;
++const esc=(x)=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
++const results={};const busy={};const errors={};
++const num=(v)=> typeof v==='number'&&Number.isFinite(v)?new Intl.NumberFormat(getLang()==='en'?'en-US':'ru-RU',{maximumFractionDigits:1}).format(v):'—';
++const provenance=(data)=>`<div class="evidence-meter"><span>🌐 ${v('model')}</span><span>🧮 ${v('calculation')}</span><span>⚠ ${v('notField')}</span></div>
++ <p class="evidence-meta"><strong>${v('source')}:</strong> <a href="${esc(data?.source_url||'https://power.larc.nasa.gov/')}" target="_blank" rel="noopener">${esc(data?.source||'NASA POWER')}</a> · ${v('date')}: ${esc(data?.retrieved_at||'—')}</p>
++ ${data?.snapshot?`<p class="source-error">⚠ ${v('snapshot')} · ${esc(data.snapshot_retrieved_at)}</p>`:''}`;
++function resultsView(kind){if(busy[kind])return `<p role="status">${v('loading')}</p>`;
++ if(errors[kind])return `<p class="source-error" role="alert">${v('unavailable')} <small>${esc(errors[kind])}</small></p>`;
++ const d=results[kind];if(!d)return `<p class="research-empty">${v('empty')}</p>`;
++ if(kind==='season'){
++  const x=d.indicators||{};
++  return `${provenance(d)}<div class="research-metrics"><div><small>${v('period')}</small><strong>${esc(d.year)}</strong></div><div><small>${v('gdd')}</small><strong>${num(x.gdd_corn_c)} °C·d</strong></div><div><small>${v('rain')}</small><strong>${num(x.rain_mm)} mm</strong></div><div><small>${v('hot')}</small><strong>${num(x.days_over_30c)}</strong></div><div><small>${v('frost')}</small><strong>${esc(x.last_spring_frost||'—')}</strong></div><div><small>${v('coverage')}</small><strong>${num((x.coverage_fraction||0)*100)}%</strong></div></div><p class="research-note">${esc(d.limits||'')} · ${esc(x.method||'')}</p>`;}
++ if(kind==='modis')return `${provenance(d)}<p class="research-note">${v('modisWarning')}</p><div class="climate-table-wrap"><table class="climate-table"><thead><tr><th>Date (MODIS)</th><th>NDVI (scaled)</th><th>${v('pixels')}</th></tr></thead><tbody>${(d.rows||[]).map(r=>`<tr><td>${esc(r.modis_date)}</td><td>${num(r.ndvi)}</td><td>${num(r.pixels)}</td></tr>`).join('')}</tbody></table></div><button type="button" data-research-export="modis">${v('csv')}</button>`;
++ if(kind==='twin')return `${provenance(d)}<p class="research-note">${v('twinWarning')}</p>${d.similarity?.score==null?`<p>${v('unavailable')}</p>`:`<div class="research-metrics"><div><small>${v('similarity')}</small><strong>${num(d.similarity.score)}%</strong></div><div><small>${v('distance')}</small><strong>${num(d.similarity.distance)}</strong></div></div>`}<table class="climate-table"><tbody>${(d.similarity?.features||[]).map(r=>`<tr><td>${esc(r.metric)}</td><td>${num(r.a)}</td><td>${num(r.b)}</td><td>scale ${num(r.scale)}</td></tr>`).join('')}</tbody></table><small>${esc(d.similarity?.method||'')}</small>`;
++ if(kind==='assistant')return `<p class="evidence-meta"><strong>Mode: ${esc(d.mode||'template')}</strong> · ${v('aiActual')}: ${d.ai_used?'Yes':'No'}</p><p>${esc(d.summary||'')}</p><details><summary>${v('data')}</summary><pre class="evidence-json">${esc(JSON.stringify(d.evidence_bundle||{},null,2))}</pre></details>`;
++ return '';
++}
++function section(kind,label,explain){return `<section class="research-section"><div class="research-section-head"><div><h3>${label}</h3><p>${explain}</p></div><button type="button" data-research="${kind}" ${busy[kind]?'disabled':''}>${v('load')} ↗</button></div><div class="research-body" id="research-${kind}">${resultsView(kind)}</div></section>`}
++export function researchTab(tab='nasa'){
++ if(tab==='aaiap')return `<div class="research-dashboard"><h2>${v('assistant')}</h2><p>${v('aiNone')}</p>${section('assistant',v('assistant'),v('intro'))}<p class="research-note">${v('how')}: AI is not active without a configured provider. Formula calculations never use AI.</p></div>`;
++ return `<div class="research-dashboard"><span class="overline">NASA SCIENCE · EVIDENCE FIRST</span><h2>${v('nasa')}</h2><p>${v('intro')}</p><div class="evidence-meter"><span>🌐 NASA POWER</span><span>🛰 NASA MODIS / ORNL</span><span>🧮 AAIAP calculations</span></div>
++ ${section('season',v('season'),'NASA POWER daily gridded weather · Corn 10/30°C GDD · April–September')}
++ ${section('modis',v('modis'),v('modisWarning'))}
++ ${section('twin',v('twin'),v('twinWarning'))}</div>`;
++}
++export function metadataView(){const lang=getLang();const content={
++ en:['Methodology & Transparency','AAIAP uses NASA POWER (daily gridded meteorology) for temperature, rainfall, GDD and frost indicators. The monthly and daily NASA products are model/grid estimates, not soil probes or weather stations.','Our corn GDD method: clamp Tmin and Tmax to 10–30 °C and sum max(0,(Tmax+Tmin)/2−10) during April–September. Heat days count Tmax >30°C. Spring frost is based on Tmin ≤0°C.','Climate Twin is a heuristic normalized distance, not field equivalence. Soil data from USDA NRCS are map-unit classifications, not NPK tests. MODIS 250m mixed pixels have not passed QA filtering.','Validation is pending: no verified ground-station comparison has been completed; bias, MAE and RMSE must not be claimed.','AI use: the assistant displays labelled deterministic text when no model provider is configured. Calculators and NASA API ingestion are not AI. AI tools assisted project development; review translations and texts before submission.'],
++ ru:['Методология и прозрачность','AAIAP использует суточные сеточные климатические данные NASA POWER для температуры, осадков, GDD и заморозков. Это модельные оценки, а не измерения почвенного датчика или метеостанции.','Для GDD кукурузы: ограничиваем Tmin и Tmax диапазоном 10–30 °C, суммируем max(0,(Tmax+Tmin)/2−10) с апреля по сентябрь. Жаркие дни: Tmax >30°C; заморозки: Tmin ≤0°C.','Climate Twin — эвристическое сравнение, а не доказательство одинаковой агротехники. SSURGO содержит почвенные картографические единицы, не лабораторные NPK. MODIS — смешанные пиксели около 250 м без полной проверки качества.','Валидация ещё не выполнена: нет подтверждённого сравнения с наземной станцией; bias, MAE и RMSE не заявляются.','Использование ИИ: без настроенной модели помощник показывает помеченный шаблонный текст. Калькуляторы и получение данных NASA не используют ИИ. Инструменты ИИ помогали в разработке; перед подачей команда должна проверить тексты и переводы.'],
++ tg:['Усулшиносӣ ва шаффофият','AAIAP маълумоти ҳаррӯзаи шабакавии NASA POWER-ро барои ҳарорат, боришот, GDD ва сардиҳо истифода мебарад. Ин баҳодиҳии моделӣ аст, на ченкунии худи майдон.','Барои GDD-и ҷуворимакка: Tmin ва Tmax то 10–30 °C маҳдуд карда шуда, max(0,(Tmax+Tmin)/2−10) аз апрел то сентябр ҷамъ мешавад. Рӯзҳои гарм: Tmax >30°C, сардиҳо: Tmin ≤0°C.','Climate Twin муқоисаи эвристикӣ аст, на исботи якхелагии агротехника. SSURGO воҳидҳои харитаи хокро медиҳад, на таҳлили NPK. MODIS пикселҳои омехтаи тақрибан 250 м дорад.','Санҷиш бо истгоҳи заминӣ ҳанӯз гузаронида нашудааст; bias, MAE ва RMSE эълон намешаванд.','Истифодаи AI: бе модели фаъол ёвар матни қолабии ишорашударо нишон медиҳад. Ҳисобкунакҳо ва боргирии NASA зеҳни сунъиро истифода намебаранд. Воситаҳои AI дар таҳияи лоиҳа ёрӣ доданд; матн ва тарҷума аз тарафи гурӯҳ санҷида шавад.']};
++ const [title,...body]=content[lang]||content.en;
++ const heads={en:['NASA / Sources','Calculations','Limitations','Validation','AI & transparency'],ru:['NASA / Источники','Расчёты','Ограничения','Проверка данных','ИИ и прозрачность'],tg:['NASA / Манбаъҳо','Ҳисобҳо','Маҳдудиятҳо','Санҷиши маълумот','AI ва шаффофият']}[lang]||['NASA / Sources','Calculations','Limitations','Validation','AI & transparency'];
++ return `<main class="content-shell methodology"><span class="overline">AAIAP · NASA SPACE APPS</span><h1>${title}</h1>${body.map((v,i)=>`<section class="research-section"><h2>${i+1}. ${heads[i]}</h2><p>${v}</p></section>`).join('')}
++ <section class="research-section"><h2>Sources</h2><a href="https://power.larc.nasa.gov/docs/services/api/temporal/daily/" target="_blank">NASA POWER docs</a> · <a href="https://modis.ornl.gov/data/modis_webservice.html" target="_blank">MODIS ORNL DAAC</a> · <a href="https://nasa-gibs.github.io/gibs-api-docs/" target="_blank">NASA GIBS</a> · <a href="https://sdmdataaccess.nrcs.usda.gov/" target="_blank">USDA NRCS</a></section></main>`
++}
++export async function handleResearchAction(button,siteId,cropId){
++ const kind=button.dataset.research;if(!kind||busy[kind])return false;
++ busy[kind]=true;errors[kind]=null;const slot=document.getElementById('research-'+kind);if(slot)slot.innerHTML=resultsView(kind);
++ try{const url=kind==='assistant'?'/api/assistant/summary':'/api/data/'+(kind==='twin'?'twin':kind);
++  const response=await fetch(url,{method:kind==='assistant'?'POST':'GET',headers:kind==='assistant'?{'Content-Type':'application/json'}:{},body:kind==='assistant'?JSON.stringify({site_id:siteId,crop:cropId,lang:getLang()}):undefined});
++  const data=await response.json();if(!response.ok)throw new Error(data.error_code||data.error||`HTTP ${response.status}`);
++  results[kind]=data;
++ }catch(e){errors[kind]=e.message||String(e)}finally{busy[kind]=false;const slot=document.getElementById('research-'+kind);if(slot)slot.innerHTML=resultsView(kind)}return true;
++}
++export function exportResearchCSV(which){
++ const rows=results[which]?.rows;if(!Array.isArray(rows))return;
++ const csv=['date,ndvi,pixel_count',...rows.map(r=>[r.modis_date,r.ndvi,r.pixels].map(x=>String(x??'')).join(','))].join('\n');
++ const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='aaiap-modis-real-data.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
++}
++
++export function refreshResearchStatic(){
++ document.querySelectorAll('[data-nav="methodology"]').forEach(b=>b.textContent=v('science'));
++ document.querySelectorAll('[data-action="openDemo"]').forEach(b=>b.textContent=v('demo')+' ↗');
++}
+--- a/js/sites.js
++++ b/js/sites.js
+@@ -1,11 +1,11 @@
+ // Coordinates are illustrative research-site locations, NOT verified field boundaries.
+-// Numbers are stored as numbers and formatted in the active language by the view code.
++// No fabricated climate or soil measurements. All unknown metrics are null.
+ export const sites = [
+- {id:'TJK-SUG-001',region:'TJK-SUG',lat:40.275,lon:69.635,area:12.5,crop:'wheat',soil:'loam',moisture:24,ndvi:0.71,ph:7.4,temp:26},
+- {id:'TJK-KHT-002',region:'TJK-KHT',lat:37.833,lon:68.782,area:18.0,crop:'cotton',soil:'alluvial',moisture:19,ndvi:0.62,ph:7.8,temp:30},
+- {id:'TJK-DRS-003',region:'TJK-RRP',lat:38.526,lon:68.563,area:9.4,crop:'wheat',soil:'loam',moisture:28,ndvi:0.77,ph:7.2,temp:24},
+- {id:'TJK-GBA-004',region:'TJK-GBA',lat:37.49,lon:71.55,area:5.2,crop:'barley',soil:'stony',moisture:17,ndvi:0.48,ph:7.6,temp:18},
+- {id:'TJK-SUG-005',region:'TJK-SUG',lat:39.91,lon:69.0,area:7.8,crop:'veg',soil:'loam',moisture:22,ndvi:0.69,ph:7.5,temp:23},
++ {id:'TJK-SUG-001',region:'TJK-SUG',lat:40.275,lon:69.635,area:null,crop:'wheat',soil:null,moisture:null,ndvi:null,ph:null,temp:null,regionalDemo:true},
++ {id:'TJK-KHT-002',region:'TJK-KHT',lat:37.833,lon:68.782,area:null,crop:'cotton',soil:null,moisture:null,ndvi:null,ph:null,temp:null,regionalDemo:true},
++ {id:'TJK-DRS-003',region:'TJK-RRP',lat:38.526,lon:68.563,area:null,crop:'wheat',soil:null,moisture:null,ndvi:null,ph:null,temp:null,regionalDemo:true},
++ {id:'TJK-GBA-004',region:'TJK-GBA',lat:37.49,lon:71.55,area:null,crop:'barley',soil:null,moisture:null,ndvi:null,ph:null,temp:null,regionalDemo:true},
++ {id:'TJK-SUG-005',region:'TJK-SUG',lat:39.91,lon:69.0,area:null,crop:'veg',soil:null,moisture:null,ndvi:null,ph:null,temp:null,regionalDemo:true},
+  {id:'USA-IA-001',region:'USA-IA',lat:42.05,lon:-93.6,area:null,crop:'corn',soil:null,moisture:null,ndvi:null,ph:null,temp:null},
+  {id:'USA-KS-002',region:'USA-KS',lat:38.5,lon:-98.2,area:null,crop:'wheat',soil:null,moisture:null,ndvi:null,ph:null,temp:null},
+  {id:'USA-NE-SCAL',region:'USA-NE-SC',lat:40.575256,lon:-98.137824,area:null,crop:'corn',soil:null,moisture:null,ndvi:null,ph:null,temp:null,referenceOnly:true}
+--- a/map.css
++++ b/map.css
+@@ -190,3 +190,12 @@
+  .leaflet-control-zoom{margin-top:90px!important}
+ }
+ @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
++/* Accessible offline map fallback (if external Leaflet fails). */
++#map.fallback-map{background:linear-gradient(140deg,#082e31,#195146 60%,#355d3f);display:flex;align-items:center;justify-content:center;color:#fff;z-index:0}
++.map-fallback-pane{width:min(900px,95%);padding:25px;display:flex;align-items:center;gap:30px;background:#062529e8;border:1px solid #ffffff55;border-radius:20px}
++.fallback-globe{font-size:clamp(70px,10vw,170px);color:#c3e88d;line-height:1}
++.map-fallback-copy h2{font-size:clamp(24px,3vw,42px);line-height:1.15;color:#fff;margin:6px 0}
++.map-fallback-copy p{color:#e7f3ee}
++.map-fallback-pane button{padding:12px 18px;background:#bcf18c;color:#10261a;border:0;border-radius:9px;font-weight:700;cursor:pointer;min-height:44px}
++.fallback-site-list{margin-top:12px;font-size:12px;opacity:.85}
++@media(max-width:640px){.map-fallback-pane{display:block}.fallback-globe{display:none}}
+--- a/render.yaml
++++ b/render.yaml
+@@ -0,0 +1,16 @@
++# Example Render Blueprint for the evaluation demo.
++# Review plan availability and cold-start behaviour on Render before inviting judges.
++services:
++  - type: web
++    name: agrosupport-demo
++    env: docker
++    plan: free
++    autoDeploy: false
++    healthCheckPath: /api/health
++    envVars:
++      - key: AAIAP_MODE
++        value: cloud-demo
++      - key: HOST
++        value: 0.0.0.0
++      - key: PORT
++        value: '10000'
+--- a/scripts/check_all.sh
++++ b/scripts/check_all.sh
+@@ -0,0 +1,8 @@
++#!/usr/bin/env sh
++set -eu
++python -m compileall -q server.py agro_calc.py assistant_template.py snapshots.py
++python -m unittest discover -s tests -v
++if command -v node >/dev/null 2>&1; then
++ for f in js/*.js; do node --check "$f"; done
++fi
++printf 'All checks completed\n'
+--- a/scripts/refresh_snapshots.py
++++ b/scripts/refresh_snapshots.py
+@@ -0,0 +1,16 @@
++"""Obtain verified and dated snapshots when connected to official APIs."""
++from pathlib import Path
++import sys
++sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
++from server import power_summary,forecast_summary,soil_summary,season_summary
++from snapshots import write_snapshot
++for name,method,url in [
++ ('power',power_summary,'https://power.larc.nasa.gov/'),
++ ('forecast',forecast_summary,'https://api.weather.gov/'),
++ ('soil',soil_summary,'https://sdmdataaccess.sc.egov.usda.gov/'),
++ ('season',season_summary,'https://power.larc.nasa.gov/')]:
++ try:
++  data=method();write_snapshot(name,data,url)
++  print('Saved real source:',name,data.get('retrieved_at'))
++ except Exception as e:
++  print('Unavailable, not simulated:',name,type(e).__name__,str(e)[:120])
+--- a/scripts/validate_power.py
++++ b/scripts/validate_power.py
+@@ -0,0 +1,22 @@
++"""Pair real NASA vs ground observations (CSV date,value). No silent imputation."""
++import csv,sys,math
++from pathlib import Path
++
++def read(path):
++ with open(path,newline='',encoding='utf-8-sig') as f:
++  return {row['date']:float(row['value']) for row in csv.DictReader(f)
++          if row.get('date') and row.get('value') not in (None,'')}
++
++def stats(a,b):
++ days=sorted(set(a)&set(b));pairs=[(a[d],b[d]) for d in days]
++ if not pairs:return None
++ err=[x-y for x,y in pairs];n=len(err)
++ bias=sum(err)/n;mae=sum(abs(x) for x in err)/n;rmse=math.sqrt(sum(x*x for x in err)/n)
++ ax=sum(x for x,y in pairs)/n;by=sum(y for x,y in pairs)/n
++ co=sum((x-ax)*(y-by) for x,y in pairs)
++ sx=sum((x-ax)**2 for x,y in pairs);sy=sum((y-by)**2 for x,y in pairs)
++ return {'n':n,'bias':bias,'mae':mae,'rmse':rmse,'correlation':co/math.sqrt(sx*sy) if sx>0 and sy>0 else None,'first':days[0],'last':days[-1]}
++
++if __name__=='__main__':
++ if len(sys.argv)!=3:raise SystemExit('Usage: python scripts/validate_power.py nasa.csv station.csv\nEach file must contain date,value. Only approved, real input data. No automatic data download.')
++ print(stats(read(sys.argv[1]),read(sys.argv[2])))
+--- a/server.py
++++ b/server.py
+@@ -1,4 +1,4 @@
+-"""AAIAP v0.0.6: Nebraska research portal + local community crop gallery.
++"""AAIAP v0.1.1-demo: Nebraska pilot + NASA evidence module.
+ 
+ No accounts or field ownership. Public image uploads are for local testing ONLY.
+ Never expose this development server directly to the Internet.
+@@ -12,6 +12,9 @@
+ import threading
+ import time
+ from datetime import datetime, timezone
++from agro_calc import summarize_daily, climate_twin
++from assistant_template import summary as template_summary
++from snapshots import read_snapshot
+ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+ from http.cookies import SimpleCookie
+ from pathlib import Path
+@@ -24,8 +27,11 @@
+ from photo_store import (UPLOAD_DIR, has_admin, admin_revision, check_admin_password, photo_manifest, update_crop_photo, focus_crop_photo, reset_crop_photo)
+ 
+ ROOT=Path(__file__).resolve().parent
+-HOST=os.environ.get('AAIAP_HOST','127.0.0.1')
+-PORT=int(os.environ.get('AAIAP_PORT','8000'))
++MODE = os.environ.get('AAIAP_MODE','local')
++CLOUD = MODE == 'cloud-demo'
++HOST=os.environ.get('HOST',os.environ.get('AAIAP_HOST','0.0.0.0' if CLOUD else '127.0.0.1'))
++PORT=int(os.environ.get('PORT',os.environ.get('AAIAP_PORT','8000')))
++VERSION='0.1.1-demo'
+ SITE={
+  'id':'USA-NE-SCAL','name':'South Central Agricultural Laboratory (UNL)',
+  'region':'USA-NE-SC','state':'Nebraska','country':'USA',
+@@ -40,8 +46,9 @@
+ }
+ CACHE={};LOCK=threading.RLock()
+ POWER_PARAMS=('T2M','PRECTOTCORR','ALLSKY_SFC_SW_DWN','WS2M')
++DAILY_PARAMS=('T2M','T2M_MAX','T2M_MIN','PRECTOTCORR')
+ # These are historical climate estimates, not forecasts or station measurements.
+-POWER_YEAR=2025
++POWER_YEAR=datetime.now(timezone.utc).year-1
+ 
+ # Sessions live only in RAM. Password hashes and photos persist on the laptop.
+ UPLOAD_LOG = {}
+@@ -51,6 +58,9 @@
+ LOGIN_FAILS = {}
+ SESSION_TTL = 8 * 60 * 60
+ MAX_JSON_BYTES = 10_000
++API_RATE={}
++API_RATE_LOCK=threading.Lock()
++API_LIMIT=120
+ 
+ def allow_upload(ip: str) -> bool:
+     now = time.monotonic()
+@@ -85,7 +95,7 @@
+ 
+ 
+ def fetch_json(url,*,method='GET',payload=None,timeout=16):
+-    headers={'Accept':'application/json','User-Agent':'AAIAP-ResearchPilot/0.0.6 (local educational prototype)'}
++    headers={'Accept':'application/json','User-Agent':'AAIAP-ResearchPilot/0.1.1-demo (+https://agrosupport.earth)'}
+     data=None
+     if payload is not None:
+         data=json.dumps(payload).encode('utf-8');headers['Content-Type']='application/json'
+@@ -176,8 +186,95 @@
+             'map_units':rows,'coordinates':{'lat':SITE['lat'],'lon':SITE['lon']}}
+ 
+ 
++def _power_daily_at(lat,lon,start,end):
++    args={'latitude':lat,'longitude':lon,'start':start,'end':end,
++          'community':'AG','parameters':','.join(DAILY_PARAMS),
++          'format':'JSON','time-standard':'LST'}
++    obj=fetch_json('https://power.larc.nasa.gov/api/temporal/daily/point?'+urlencode(args), timeout=25)
++    data=obj.get('properties',{}).get('parameter',{})
++    if not all(isinstance(data.get(k),dict) for k in DAILY_PARAMS):
++        raise ValueError('Incomplete NASA POWER response; no figures substituted')
++    return data
++
++
++def season_summary():
++    data=_power_daily_at(SITE['lat'],SITE['lon'],f'{POWER_YEAR}0101',f'{POWER_YEAR}1231')
++    indicators=summarize_daily(data,POWER_YEAR)
++    return {'source':'NASA POWER','source_url':'https://power.larc.nasa.gov/',
++            'retrieved_at':datetime.now(timezone.utc).isoformat(timespec='seconds'),
++            'year':POWER_YEAR,'indicators':indicators,
++            'site_id':SITE['id'],'coordinates':{'lat':SITE['lat'],'lon':SITE['lon']},
++            'spatial_resolution':'NASA POWER daily gridded estimate (~0.5-degree meteorological grid; varies by parameter)',
++            'provenance_type':'NASA reanalysis/model derived; AAIAP deterministic calculation',
++            'limits':'No ground validation performed. Corn GDD only; thresholds for other crops are not established.'}
++
++
++def modis_summary():
++    # ORNL TESViS documented MOD13Q1 Subset API. Actual availability/quality
++    # must be verified on a connected device; output is not a plot measurement.
++    lat,lon=SITE['lat'],SITE['lon']
++    start=f'A{POWER_YEAR}001';end=f'A{POWER_YEAR}365'
++    url='https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?'+urlencode({
++        'latitude':lat,'longitude':lon,'startDate':start,'endDate':end,
++        'kmAboveBelow':0,'kmLeftRight':0})
++    raw=fetch_json(url,timeout=25)
++    rows=[]
++    for part in raw.get('subset',[]):
++        if not isinstance(part,dict) or not part.get('band','').endswith('_NDVI'):continue
++        arr=part.get('data',[])
++        if not isinstance(arr,list):continue
++        valid=[v for v in arr if isinstance(v,(int,float)) and -2000<=v<=10000]
++        if not valid:continue
++        rows.append({'modis_date':part.get('modis_date'),
++                     'ndvi':round(sum(valid)/len(valid)*0.0001,4),
++                     'pixels':len(valid)})
++    if not rows:raise ValueError('No valid MODIS NDVI pixels returned')
++    return {'source':'NASA ORNL DAAC TESViS · MOD13Q1 NDVI',
++            'source_url':'https://modis.ornl.gov/data/modis_webservice.html',
++            'retrieved_at':datetime.now(timezone.utc).isoformat(timespec='seconds'),
++            'year':POWER_YEAR,'rows':rows,
++            'resolution_note':'MOD13Q1 ~250m pixels; mixed land cover and QA flags are not yet filtered. Exploratory only; NOT measured NDVI of a field.',
++            'status':'experimental-verify-online'}
++
++
++def twin_summary():
++    # Clearly labeled regional reference in Tajikistan, never a field parcel.
++    regions=[{'id':'TJ-REGION-REFERENCE','name':'Dushanbe regional reference point (not a field)',
++              'lat':38.56,'lon':68.77},
++             {'id':'USA-NE-SCAL','name':SITE['name'],'lat':SITE['lat'],'lon':SITE['lon']}]
++    results=[]
++    # 5 completed growing seasons: enough for an illustrative comparison but not
++    # a definitive 30-year climate normal.
++    start_year=POWER_YEAR-4
++    for r in regions:
++        params=_power_daily_at(r['lat'],r['lon'],f'{start_year}0101',f'{POWER_YEAR}1231')
++        years=[summarize_daily(params,year) for year in range(start_year,POWER_YEAR+1)]
++        cols=('tmean_c','rain_mm','gdd_corn_c','days_over_30c')
++        features={k:round(sum(x[k] for x in years if x[k] is not None)/len([x for x in years if x[k] is not None]),2)
++                  if any(x[k] is not None for x in years) else None for k in cols}
++        results.append({**r,'features':features,'period':f'{start_year}–{POWER_YEAR}',
++                        'seasons_with_records':sum(x['coverage_fraction']>.95 for x in years)})
++    compare=climate_twin(results[0]['features'],results[1]['features'])
++    return {'source':'NASA POWER','source_url':'https://power.larc.nasa.gov/',
++            'retrieved_at':datetime.now(timezone.utc).isoformat(timespec='seconds'),
++            'regions':results,'similarity':compare,'type':'derived-reanalysis-heuristic',
++            'warning':'Regional reference points; no claim of field or farm equivalence. The score is NOT crop suitability.'}
++
++
++def api_allow(ip):
++    now=time.monotonic()
++    with API_RATE_LOCK:
++        recent=[x for x in API_RATE.get(ip,[]) if now-x<60]
++        if len(recent)>=API_LIMIT:API_RATE[ip]=recent;return False
++        recent.append(now);API_RATE[ip]=recent
++        if len(API_RATE)>500:
++            for k in list(API_RATE)[:200]:
++                if k!=ip:API_RATE.pop(k,None)
++        return True
++
++
+ class Handler(BaseHTTPRequestHandler):
+-    server_version = 'AAIAP/0.0.6'
++    server_version = 'AAIAP/0.1.1-demo'
+ 
+     def _json(self, status, payload, *, cookie=None):
+         content = json.dumps(payload, ensure_ascii=False, allow_nan=False).encode('utf-8')
+@@ -185,12 +282,26 @@
+         self.send_header('Content-Type', 'application/json; charset=utf-8')
+         self.send_header('Content-Length', str(len(content)))
+         self.send_header('Cache-Control', 'no-store')
+-        self.send_header('X-Content-Type-Options', 'nosniff')
+-        self.send_header('Referrer-Policy', 'same-origin')
++        self._security_headers()
+         if cookie is not None:
+             self.send_header('Set-Cookie', cookie)
+         self.end_headers()
+         self.wfile.write(content)
++
++    def _security_headers(self):
++        self.send_header('X-Content-Type-Options','nosniff')
++        self.send_header('Referrer-Policy','strict-origin-when-cross-origin')
++        self.send_header('X-Frame-Options','DENY')
++        self.send_header('Permissions-Policy','camera=(), microphone=(), geolocation=()')
++        self.send_header('Content-Security-Policy',
++          "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; "
++          "script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net; "
++          "style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com; "
++          "img-src 'self' data: https://*.tile.openstreetmap.org https://server.arcgisonline.com "
++          "https://images.unsplash.com https://gibs.earthdata.nasa.gov; "
++          "font-src 'self' https://fonts.gstatic.com; "
++          "connect-src 'self' https://raw.githubusercontent.com https://www.geoboundaries.org "
++          "https://gibs.earthdata.nasa.gov; form-action 'self'")
+ 
+     def _session(self):
+         _expire_sessions()
+@@ -218,6 +329,9 @@
+         return '; '.join(parts)
+ 
+     def _require_admin(self):
++        if CLOUD:
++            self._json(403, {'error_code':'CLOUD_READ_ONLY','error':'Administrative edits are disabled in the cloud demo'})
++            return False
+         _, session = self._session()
+         if not session:
+             self._json(401, {'error': 'Войдите как администратор'})
+@@ -274,34 +388,44 @@
+     def do_GET(self):
+         path = unquote(urlparse(self.path).path)
+         if path.startswith('/api/'):
++            if not api_allow(self.client_address[0]):
++                return self._json(429, {'error_code':'RATE_LIMIT','error':'Too many API requests'})
+             if path == '/api/photos':
+-                return self._json(200, {'photos': photo_manifest()})
++                return self._json(200, {'photos': {} if CLOUD else photo_manifest()})
+             if path == '/api/admin/status':
+-                _, session = self._session()
+-                result = {'configured': has_admin(), 'authenticated': bool(session)}
++                _, session = self._session() if not CLOUD else (None,None)
++                result = {'configured': has_admin() if not CLOUD else False, 'authenticated': bool(session), 'disabled':CLOUD}
+                 if session:
+                     result['csrf'] = session['csrf']
+                 return self._json(200, result)
+             if path == '/api/community/photos':
++                if CLOUD:return self._json(200, {'crop':'', 'photos':[], 'read_only':True})
+                 crop = parse_qs(urlparse(self.path).query).get('crop', [''])[0]
+                 try:
+                     return self._json(200, {'crop': crop, 'photos': gallery(crop)})
+                 except ValueError as e:
+                     return self._json(400, {'error': str(e)})
+             routes = {
+-                '/api/health': lambda: {'ok': True, 'version': '0.0.6', 'mode': 'public-readonly-science/community-photos'},
++                '/api/health': lambda: {'ok': True, 'version': VERSION, 'mode': MODE, 'cache_entries':len(CACHE), 'snapshot_available':[n for n in ('power','forecast','soil','season','modis') if read_snapshot(n)]},
+                 '/api/sites': lambda: {'sites': [SITE]},
+                 '/api/data/power': lambda: cached('power', 24*3600, power_summary),
+                 '/api/data/forecast': lambda: cached('forecast', 20*60, forecast_summary),
+-                '/api/data/soil': lambda: cached('soil', 7*24*3600, soil_summary)
++                '/api/data/soil': lambda: cached('soil', 7*24*3600, soil_summary),
++                '/api/data/season': lambda: cached('season', 24*3600, season_summary),
++                '/api/data/modis': lambda: cached('modis', 48*3600, modis_summary),
++                '/api/data/twin': lambda: cached('twin', 14*24*3600, twin_summary)
+             }
+             if path not in routes:
+                 return self._json(404, {'error': 'Not found'})
+             try:
+                 return self._json(200, routes[path]())
+             except (HTTPError, URLError, TimeoutError, RuntimeError, ValueError, KeyError, TypeError) as e:
++                snap=read_snapshot(path.rsplit('/',1)[-1])
++                if snap:return self._json(200,snap)
+                 return self._json(503, {'error': 'Data source is temporarily unavailable',
+                                         'source': path.rsplit('/', 1)[-1], 'detail': str(e)[:180]})
++        if CLOUD and path.startswith('/uploads/'):
++            return self.send_error(404,'Uploads are disabled in cloud demo')
+         if path.startswith('/uploads/crops/'):
+             parts = path.split('/')
+             if len(parts) != 5 or parts[3] not in CROP_IDS:
+@@ -346,17 +470,46 @@
+             self.send_header('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; sandbox")
+         self.send_header('Content-Type', ct + ('; charset=utf-8' if ct.startswith('text/') or ct in ('application/javascript', 'application/json') else ''))
+         self.send_header('Content-Length', str(len(data)))
+-        self.send_header('X-Content-Type-Options', 'nosniff')
+-        self.send_header('Referrer-Policy', 'same-origin')
++        self._security_headers()
+         if cache:
+             self.send_header('Cache-Control', cache)
+         self.end_headers()
+         self.wfile.write(data)
+ 
++    def do_HEAD(self):
++        path=urlparse(self.path).path
++        if path in ('/','/index.html','/api/health'):
++            self.send_response(200)
++            self.send_header('Content-Type','application/json' if path=='/api/health' else 'text/html; charset=utf-8')
++            self._security_headers()
++            self.end_headers()
++        else:
++            self.send_error(404,'Not found')
++
+     def do_POST(self):
+         path = urlparse(self.path).path
++        if CLOUD and (path.startswith('/api/admin/') or path.startswith('/api/community/')):
++            return self._json(403, {'error_code':'CLOUD_READ_ONLY','error':'Uploads and admin disabled in cloud demo'})
++        if path == '/api/assistant/summary':
++            if not api_allow(self.client_address[0]):return self._json(429,{'error_code':'RATE_LIMIT'})
++            data=self._read_json()
++            if data is None:return
++            if data.get('site_id') != SITE['id'] or data.get('crop') not in CROP_IDS:
++                return self._json(400,{'error_code':'INVALID_SITE_OR_CROP'})
++            evidence={'site_id':SITE['id'],'crop':data['crop'],'season':None,'source_status':'not-loaded'}
++            try:
++                with LOCK:
++                    row=CACHE.get('season')
++                clim=row[1] if row and time.monotonic()-row[0]<24*3600 else read_snapshot('season')
++                if clim:
++                    evidence['season']=clim.get('indicators');evidence['source_status']='offline-snapshot' if clim.get('snapshot') else 'cached-live';evidence['source_url']=clim.get('source_url')
++            except Exception:
++                pass
++            result=template_summary(evidence,data.get('lang','en'))
++            result['ai_used']=False
++            return self._json(200,result)
+         if path == '/api/admin/login':
+-            if not has_admin():
++            if not CLOUD and not has_admin():
+                 return self._json(409, {'error': 'Сначала выполните: py -3 setup_admin.py'})
+             if not _check_login_limit(self.client_address[0]):
+                 return self._json(429, {'error': 'Слишком много попыток. Повторите через 15 минут.'})
+@@ -415,6 +568,7 @@
+             return self._json(500, {'error': 'Could not save image to laptop storage'})
+ 
+     def do_PUT(self):
++        if CLOUD:return self._json(403,{'error_code':'CLOUD_READ_ONLY'})
+         crop = self._photo_crop()
+         if crop is None or not self._require_admin():
+             return
+@@ -433,6 +587,7 @@
+             return self._json(500, {'error': 'Не удалось сохранить фотографию на сервере'})
+ 
+     def do_PATCH(self):
++        if CLOUD:return self._json(403,{'error_code':'CLOUD_READ_ONLY'})
+         crop = self._photo_crop()
+         if crop is None or not self._require_admin():
+             return
+@@ -449,6 +604,7 @@
+             return self._json(400, {'error': str(e)})
+ 
+     def do_DELETE(self):
++        if CLOUD:return self._json(403,{'error_code':'CLOUD_READ_ONLY'})
+         crop = self._photo_crop()
+         if crop is None or not self._require_admin():
+             return
+@@ -462,9 +618,9 @@
+         return self._json(405, {'error': 'Cross-origin requests are not permitted'})
+ 
+ if __name__ == '__main__':
+-    print(f'AAIAP v0.0.6 · Nebraska pilot · http://{HOST}:{PORT}')
+-    print('Фермеры добавляют фотографии без регистрации. Главные фото — только через необязательный редактор администратора.')
+-    if not has_admin():
++    print(f'AAIAP {VERSION} · mode {MODE} · http://{HOST}:{PORT}')
++    print('Cloud-demo: photo uploads/admin disabled' if CLOUD else 'Local mode: crop community uploads available')
++    if not CLOUD and not has_admin():
+         print('Редактор главных фотографий не настроен: py -3 setup_admin.py (не обязательно для фермеров)')
+     print('Development only; never expose this Python HTTP server directly to the Internet.')
+     ThreadingHTTPServer((HOST, PORT), Handler).serve_forever()
+--- a/snapshots.py
++++ b/snapshots.py
+@@ -0,0 +1,26 @@
++"""Read-only offline fallback from real saved JSON responses, never synthetic data."""
++import json
++from pathlib import Path
++from datetime import datetime, timezone
++SNAP_DIR=Path(__file__).resolve().parent/'data_snapshots'
++VALID={'power','forecast','soil','season','modis'}
++
++def read_snapshot(name):
++    if name not in VALID: return None
++    p=SNAP_DIR/f'{name}.json'
++    if not p.is_file(): return None
++    try:
++        row=json.loads(p.read_text('utf-8'))
++        if (row.get('verified_source') is not True or not isinstance(row.get('data'),dict)
++            or not row.get('retrieved_at') or not row.get('source_url')): return None
++        return {**row['data'],'snapshot':True,'snapshot_retrieved_at':row['retrieved_at'],
++                'data_status':'offline-real-snapshot','snapshot_source':row['source_url']}
++    except (OSError,ValueError,TypeError): return None
++
++def write_snapshot(name, data, source_url):
++    if name not in VALID: raise ValueError('invalid snapshot type')
++    SNAP_DIR.mkdir(exist_ok=True)
++    row={'verified_source':True,'retrieved_at':datetime.now(timezone.utc).isoformat(),
++         'source_url':source_url,'data':data}
++    target=SNAP_DIR/f'{name}.json';temp=target.with_suffix('.tmp')
++    temp.write_text(json.dumps(row,ensure_ascii=False,indent=2),encoding='utf-8');temp.replace(target)
+--- a/start_windows.bat
++++ b/start_windows.bat
+@@ -1,15 +1,6 @@
+ @echo off
+ cd /d "%~dp0"
+-echo.
+-echo AgroSupport (AAIAP) v0.0.6 - Nebraska Farmer Portal
+-
+-echo Open http://127.0.0.1:8000 in your browser
+-
+-echo Keep this window open while using AAIAP.
+-where py >nul 2>&1
+-if %errorlevel% equ 0 (
+-    py -3 server.py
+-) else (
+-    python server.py
+-)
++echo AAIAP 0.1.1-demo -- local research pilot
++echo Open http://127.0.0.1:8000 after the server starts.
++py -3 server.py
+ pause
+--- a/styles.css
++++ b/styles.css
+@@ -658,3 +658,32 @@
+ .photo-editor-notice{padding:12px;border-radius:12px;background:var(--surface);border:1px solid var(--line);margin-bottom:14px;font-size:14px}
+ .photo-editor-notice.is-error{border-color:#bd4c45;color:#d56a60}
+ @media(max-width:520px){.photo-editor-modal{padding:18px}.photo-focus-controls{grid-template-columns:1fr}.photo-editor-header h2{font-size:23px}}
++/* Evidence-focused NASA research panels, screen-reader friendly fallback */
++.research-dashboard,.methodology{display:grid;gap:16px;max-width:100%}
++.research-dashboard>h2{font-size:clamp(26px,4vw,40px);margin:0}
++.research-dashboard>p{line-height:1.6}
++.research-section{border:1px solid var(--line-strong);background:var(--surface);border-radius:18px;padding:clamp(15px,2vw,25px);display:grid;gap:13px}
++.research-section-head{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
++.research-section h3,.research-section h2{font-size:20px;margin:0 0 5px}
++.research-section p{line-height:1.6;margin:4px 0}
++.research-section button{background:var(--accent);color:var(--on-accent);border:0;border-radius:10px;padding:12px 14px;min-height:44px;cursor:pointer;font:inherit;font-weight:700}
++.evidence-meter{display:flex;gap:8px;flex-wrap:wrap;font-size:12px}
++.evidence-meter span{padding:6px 11px;background:var(--surface-2);border:1px solid var(--line);border-radius:99px}
++.evidence-meta{font-size:12px;color:var(--text-2);overflow-wrap:anywhere}
++.research-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
++.research-metrics>div{background:var(--surface-2);border-radius:11px;padding:12px;display:grid;gap:7px}
++.research-metrics small{font-size:12px;color:var(--text-2)}
++.research-metrics strong{font-size:clamp(18px,2vw,25px)}
++.research-note{font-size:13px;color:var(--text-2);max-width:74ch}
++.research-empty{color:var(--text-2);font-style:italic}
++.evidence-json{font-size:12px;white-space:pre-wrap;overflow:auto;max-height:220px;background:var(--surface-2);padding:10px}
++.methodology{padding-block:30px}
++.methodology h1{font-size:clamp(29px,4vw,56px);line-height:1.2}
++.methodology a{color:var(--accent)}
++.welcome-copy h1{font-size:clamp(42px,5.3vw,90px);overflow-wrap:break-word;line-height:1.07}
++@media(max-width:620px){.research-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.research-section-head{align-items:stretch}.research-section-head button{width:100%}}
++
++.cloud-demo .photo-settings-trigger,.cloud-demo .photo-editor-backdrop,.cloud-demo .community-upload{display:none!important}
++.demo-quicklink{padding:12px 18px;border:2px solid var(--accent);background:var(--surface-2);color:var(--text);border-radius:10px;font-size:14px;font-weight:700;min-height:44px;cursor:pointer;margin:10px 0}
++
++.cloud-demo .role-locked{display:none!important}
+--- a/tests/test_agro.py
++++ b/tests/test_agro.py
+@@ -0,0 +1,51 @@
++import unittest
++from unittest.mock import patch
++from agro_calc import gdd_day, summarize_daily, climate_twin
++from assistant_template import summary
++from snapshots import read_snapshot
++import server
++
++class AgroScienceTests(unittest.TestCase):
++ def test_gdd_clamps_corn_limits(self):
++  self.assertEqual(gdd_day(35,5),10)
++  self.assertEqual(gdd_day(20,10),5)
++  self.assertEqual(gdd_day(-999,10),None)
++  self.assertEqual(gdd_day(4,-5),0)
++
++ def test_daily_measures_never_impute_nasa_fill(self):
++  data={'T2M_MAX':{'20250501':35,'20250502':-999},'T2M_MIN':{'20250501':5,'20250502':8},
++        'T2M':{'20250501':20,'20250502':-999},'PRECTOTCORR':{'20250501':7,'20250502':-999}}
++  x=summarize_daily(data,2025)
++  self.assertEqual(x['gdd_corn_c'],10)
++  self.assertEqual(x['gdd_days'],1)
++  self.assertEqual(x['rain_mm'],7)
++  self.assertEqual(x['rain_days'],1)
++  self.assertLess(x['coverage_fraction'],.01)
++
++ def test_similarity_only_if_complete(self):
++  a={'tmean_c':22,'rain_mm':400,'gdd_corn_c':1200,'days_over_30c':60}
++  self.assertEqual(climate_twin(a,a)['score'],100)
++  self.assertIsNone(climate_twin(a,{}).get('score'))
++
++ def test_template_is_honest_and_no_recommendation_doses(self):
++  v=summary({'site_id':'USA-NE-SCAL','season':{'valid_days':365}},'ru')
++  self.assertEqual(v['mode'],'template');self.assertIn('NASA POWER',v['summary'])
++  self.assertNotIn('кг/га',v['summary'])
++
++ def test_no_shipped_fabricated_snapshot(self):
++  self.assertIsNone(read_snapshot('unknown-key'))
++  self.assertIsNone(read_snapshot('season'))
++
++ def test_real_source_parsing_from_mocked_api(self):
++  params={'T2M_MAX':{'20250401':20},'T2M_MIN':{'20250401':10},
++          'T2M':{'20250401':15},'PRECTOTCORR':{'20250401':2}}
++  with patch.object(server,'_power_daily_at',return_value=params):
++   x=server.season_summary()
++  self.assertEqual(x['indicators']['gdd_corn_c'],5)
++  self.assertEqual(x['source'],'NASA POWER')
++
++ def test_cloud_mode_has_no_upload_or_admin(self):
++  self.assertFalse(server.CLOUD) # ordinary local tests load local mode
++  self.assertIn('cloud-demo',open('server.py',encoding='utf-8').read())
++
++if __name__=='__main__':unittest.main()
+--- a/tests/test_cloud_mode.py
++++ b/tests/test_cloud_mode.py
+@@ -0,0 +1,41 @@
++import contextlib,threading,unittest,json
++from http.server import ThreadingHTTPServer
++from urllib.error import HTTPError
++from urllib.request import Request,urlopen
++from unittest.mock import patch
++import server
++
++class CloudDemoHttpTests(unittest.TestCase):
++ @classmethod
++ def setUpClass(cls):
++  cls.httpd=ThreadingHTTPServer(('127.0.0.1',0),server.Handler)
++  cls.port=cls.httpd.server_address[1]
++  cls.thread=threading.Thread(target=cls.httpd.serve_forever,daemon=True);cls.thread.start()
++ @classmethod
++ def tearDownClass(cls):
++  cls.httpd.shutdown();cls.httpd.server_close();cls.thread.join(timeout=2)
++ def url(self,path):return f'http://127.0.0.1:{self.port}{path}'
++ def test_health_and_head_are_ready(self):
++  with patch.object(server,'CLOUD',True),patch.object(server,'MODE','cloud-demo'):
++   with urlopen(self.url('/api/health')) as r:
++    data=json.load(r);self.assertEqual(data['mode'],'cloud-demo')
++    self.assertEqual(data['version'],'0.1.1-demo')
++   with urlopen(Request(self.url('/'),method='HEAD')) as r:self.assertEqual(r.status,200)
++ def test_cloud_admin_and_community_upload_are_blocked(self):
++  with patch.object(server,'CLOUD',True):
++   for path in ['/api/admin/login','/api/community/photos/corn']:
++    request=Request(self.url(path),data=b'{}',method='POST',headers={'Content-Type':'application/json'})
++    with self.assertRaises(HTTPError) as ctx:urlopen(request)
++    self.assertEqual(ctx.exception.code,403)
++   with urlopen(self.url('/api/community/photos?crop=corn')) as r:
++    self.assertEqual(json.load(r)['photos'],[])
++ def test_template_summary_work_without_external_requests(self):
++  with patch.object(server,'CLOUD',True),patch.object(server,'CACHE',{}):
++   data=json.dumps({'site_id':'USA-NE-SCAL','crop':'corn','lang':'en'}).encode()
++   with urlopen(Request(self.url('/api/assistant/summary'),data=data,
++          method='POST',headers={'Content-Type':'application/json'})) as r:
++    response=json.load(r)
++    self.assertEqual(response['mode'],'template')
++    self.assertFalse(response['ai_used'])
++
++if __name__=='__main__':unittest.main()

@@ -1,0 +1,201 @@
+/* AgroSupport v0.5 — base tokens, typography and the GIS map view.
+   Palette (only these six colours are used anywhere; everything else is an opacity of one of them):
+   #1a1a1a ink · #002626 deep · #0e4749 teal · #E0FFC2 lime · #7B5B43 clay · #302016 bark          */
+/* The family ships in one weight. Declaring it for 700 too stops browsers from smearing a fake bold on top;
+   hierarchy is built from size, case, spacing and colour instead. */
+:root{
+ --ink:#1a1a1a;--deep:#002626;--teal:#0e4749;--lime:#E0FFC2;--clay:#7B5B43;--bark:#302016;
+ --font:'PT Sans','Arial',sans-serif;
+ --r-card:28px;--r-pill:999px;
+ /* dark theme (default) */
+ --bg:var(--deep);--bg-bar:rgba(0,38,38,.9);--bg-foot:var(--ink);
+ --surface:rgba(14,71,73,.42);--surface-2:rgba(14,71,73,.78);--field:rgba(26,26,26,.5);
+ --line:rgba(224,255,194,.2);--line-strong:rgba(224,255,194,.42);
+ --text:var(--lime);--text-2:rgba(224,255,194,.82);--text-3:rgba(224,255,194,.64);
+ --accent:var(--lime);--on-accent:var(--deep);
+ --hero:linear-gradient(140deg,var(--teal) 0%,var(--deep) 78%);
+ --orb-base:var(--deep);--orb-in:linear-gradient(150deg,var(--teal),var(--deep));--orb-ring:linear-gradient(150deg,var(--lime),var(--clay));
+ --ring-fill:rgba(14,71,73,.4);
+ --warn-bg:rgba(48,32,22,.9);--warn-text:var(--lime);--warn-line:var(--clay);
+ --shadow:0 22px 50px rgba(26,26,26,.55);--panel:rgba(0,38,38,.94);
+ color-scheme:dark;
+}
+:root[data-theme=light]{
+ --bg:var(--lime);--bg-bar:rgba(224,255,194,.92);--bg-foot:var(--teal);
+ --surface:rgba(14,71,73,.08);--surface-2:rgba(14,71,73,.16);--field:rgba(14,71,73,.07);
+ --line:rgba(14,71,73,.24);--line-strong:rgba(14,71,73,.55);
+ --text:var(--deep);--text-2:rgba(0,38,38,.86);--text-3:rgba(0,38,38,.72);
+ --accent:var(--deep);--on-accent:var(--lime);
+ --hero:linear-gradient(140deg,rgba(14,71,73,.2) 0%,rgba(14,71,73,.05) 80%);
+ --orb-base:var(--lime);--orb-in:linear-gradient(150deg,rgba(14,71,73,.2),rgba(14,71,73,.04));--orb-ring:linear-gradient(150deg,var(--teal),var(--clay));
+ --ring-fill:rgba(14,71,73,.07);
+ --warn-bg:rgba(123,91,67,.18);--warn-text:var(--bark);--warn-line:var(--clay);
+ --shadow:0 18px 40px rgba(14,71,73,.22);--panel:rgba(224,255,194,.96);
+ color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body,#app,#map{height:100%;width:100%;margin:0}
+html{font-synthesis:none}
+body{font-family:var(--font);font-size:16px;letter-spacing:.02em;line-height:1.55;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow:hidden}
+button,input,select,textarea{font:inherit;letter-spacing:inherit;color:inherit}
+button{cursor:pointer}
+b,strong,h1,h2,h3,h4,th{font-weight:400}
+.ic{display:block;flex:none}.ico{display:inline-flex;align-items:center}
+.latin{font-style:normal;letter-spacing:.05em}
+::selection{background:var(--clay);color:var(--lime)}
+:focus-visible{outline:3px solid var(--text);outline-offset:3px}
+[hidden]{display:none!important}
+
+/* ---------- shared controls (portal topbar + map topbar) ---------- */
+.logo-mark{display:block;flex:none;width:48px;height:48px;border-radius:50%;overflow:hidden;background:var(--ink);border:2px solid var(--line-strong)}
+.logo-mark img{display:block;width:100%;height:100%;object-fit:cover}
+.round-btn{width:44px;height:44px;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface);color:var(--text);display:grid;place-items:center;padding:0;transition:background .2s,transform .2s}
+.round-btn:hover{background:var(--surface-2)}.round-btn:active{transform:scale(.94)}
+.theme-icon{display:grid;place-items:center}
+.lang-switch{display:flex;gap:2px;padding:3px;border-radius:var(--r-pill);border:1px solid var(--line-strong);background:var(--surface)}
+.lang-switch button{border:0;background:transparent;border-radius:var(--r-pill);padding:8px 13px;font-size:13px;letter-spacing:.12em;min-width:44px;min-height:36px;color:var(--text-2)}
+.lang-switch button:hover{color:var(--text)}
+.lang-switch button.active{background:var(--accent);color:var(--on-accent)}
+.pill-btn{display:inline-flex;align-items:center;gap:8px;border-radius:var(--r-pill);border:1px solid var(--line-strong);background:var(--surface);color:var(--text);padding:10px 18px;min-height:44px}
+.pill-btn.solid{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+
+/* ---------- GIS map ---------- */
+#map{z-index:0;background:var(--bg)}
+.topbar{position:absolute;top:18px;left:22px;right:22px;height:68px;z-index:900;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 14px 0 12px;border:1px solid var(--line-strong);border-radius:var(--r-pill);background:var(--panel);box-shadow:var(--shadow);backdrop-filter:blur(14px)}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.brand .logo-mark{width:44px;height:44px}
+.brand strong{display:block;font-size:22px;letter-spacing:.06em;line-height:1.1}
+.brand small{display:block;font-size:11px;color:var(--text-3);letter-spacing:.18em;margin-top:3px}
+.header-actions{display:flex;align-items:center;gap:12px;font-size:11px;letter-spacing:.16em;color:var(--text-3)}
+.live-dot{width:9px;height:9px;border-radius:50%;background:var(--clay);box-shadow:0 0 0 4px rgba(123,91,67,.3)}
+.map-hint{position:absolute;top:100px;left:50%;transform:translateX(-50%);z-index:700;background:var(--panel);border:1px solid var(--line);padding:10px 20px;border-radius:var(--r-pill);box-shadow:var(--shadow);color:var(--text-2);font-size:14px;text-align:center;max-width:80vw}
+.map-actions{position:absolute;left:22px;bottom:48px;z-index:700;display:flex;gap:8px;flex-wrap:wrap}
+.map-actions button,.upload-btn{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--line-strong);border-radius:var(--r-pill);background:var(--panel);padding:11px 18px;min-height:44px;color:var(--text);font-size:14px;box-shadow:var(--shadow);transition:background .2s,color .2s}
+.upload-btn{cursor:pointer}
+.map-actions button:hover,.upload-btn:hover{background:var(--accent);color:var(--on-accent)}
+.map-actions button[aria-pressed=true]{border-color:var(--text)}
+.map-legend{position:absolute;right:22px;bottom:48px;z-index:700;background:var(--panel);padding:18px 20px;border:1px solid var(--line-strong);border-radius:var(--r-card);font-size:13px;box-shadow:var(--shadow);min-width:240px}
+#app:has(.panel.open) .map-legend{opacity:0;pointer-events:none}
+.map-legend{transition:opacity .25s}
+.legend-heading{font-size:12px;letter-spacing:.2em;margin-bottom:12px;color:var(--text-3)}
+.lg-row{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.legend-swatch{display:inline-block;width:14px;height:14px;border-radius:50%;border:1px solid var(--line-strong);flex:none}
+.legend-note{color:var(--text-3);font-size:12px;max-width:250px;line-height:1.45;margin-top:4px}
+.panel{position:absolute;z-index:850;top:104px;bottom:112px;width:340px;max-width:calc(100vw - 30px);background:var(--panel);border:1px solid var(--line-strong);border-radius:var(--r-card);box-shadow:var(--shadow);display:flex;flex-direction:column;transition:transform .32s ease,opacity .32s ease;opacity:0;pointer-events:none;overflow:hidden;backdrop-filter:blur(14px)}
+.panel-left{left:20px;transform:translateX(-115%)}.panel-right{right:20px;transform:translateX(115%)}
+.panel.open{transform:translateX(0);opacity:1;pointer-events:auto}
+.panel-header{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:22px 22px 18px;border-bottom:1px solid var(--line);background:var(--surface)}
+.eyebrow{font-size:11px;letter-spacing:.2em;color:var(--text-3);text-transform:uppercase}
+h2{font-size:24px;margin:8px 0 4px;line-height:1.15}
+h3{font-size:19px}
+.panel-header p{margin:0;font-size:13px;color:var(--text-2)}
+.close-panel{width:40px;height:40px;border-radius:50%;border:1px solid var(--line-strong);background:transparent;display:grid;place-items:center;padding:0;flex:none}
+.close-panel:hover{background:var(--surface-2)}
+.panel-content{overflow:auto;padding:20px 22px}
+.panel-content p{font-size:14px;line-height:1.65;color:var(--text-2)}
+.demo-alert{font-size:13px;color:var(--warn-text);background:var(--warn-bg);border:1px solid var(--warn-line);padding:12px 16px;border-radius:20px;line-height:1.5;margin-bottom:20px}
+.section-title{font-size:12px;text-transform:uppercase;letter-spacing:.18em;color:var(--text-3);margin:22px 0 8px}
+.metric{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding:11px 0;font-size:14px;gap:12px}
+.metric span{color:var(--text-3)}.metric strong{text-align:right;color:var(--text)}
+.preview-photo{width:100%;height:auto;aspect-ratio:1;max-width:240px;display:block;margin:0 auto 16px;object-fit:cover;border-radius:50%;border:3px solid var(--line-strong);background:var(--teal)}
+.primary-btn,.secondary-btn,.back-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:var(--r-pill);padding:12px 22px;min-height:46px;border:1px solid var(--accent)}
+.primary-btn{background:var(--accent);color:var(--on-accent);margin-top:12px;width:100%}
+.secondary-btn,.back-btn{background:transparent;color:var(--text);border-color:var(--line-strong)}
+.back-btn:hover,.secondary-btn:hover{background:var(--surface-2)}
+.bottom-credit{position:absolute;z-index:500;bottom:12px;left:50%;transform:translateX(-50%);white-space:nowrap;color:var(--text-2);font-size:11px;letter-spacing:.14em;background:var(--panel);padding:4px 14px;border-radius:var(--r-pill);border:1px solid var(--line)}
+/* 3D soil-block pin, recoloured to the palette */
+.soil-pin{width:49px;height:54px;position:relative;filter:drop-shadow(0 7px 4px rgba(26,26,26,.55));cursor:pointer;transition:transform .2s}
+.soil-pin:hover{transform:scale(1.15)}
+.soil-top{position:absolute;top:2px;left:6px;width:38px;height:18px;background:linear-gradient(135deg,var(--lime),var(--teal));transform:skewY(-17deg) rotate(-1deg);border:2px solid var(--lime);border-radius:3px}
+.soil-front{position:absolute;top:18px;left:6px;width:38px;height:25px;background:linear-gradient(var(--clay) 0 35%,var(--bark) 35% 70%,var(--ink) 70%);transform:skewY(17deg);border:1px solid var(--bark)}
+.soil-side{position:absolute;top:14px;left:44px;width:9px;height:27px;background:linear-gradient(var(--bark) 0 35%,var(--ink) 35%);transform:skewY(-35deg);transform-origin:top left}
+.soil-label{position:absolute;top:49px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--lime);border:1px solid var(--clay);border-radius:var(--r-pill);padding:2px 9px;white-space:nowrap;font-size:11px;letter-spacing:.12em}
+/* Leaflet chrome */
+.leaflet-container{font-family:var(--font);background:var(--bg)}
+.leaflet-control-zoom{margin-top:104px!important;border:0!important;box-shadow:var(--shadow)!important;border-radius:var(--r-pill)!important;overflow:hidden}
+.leaflet-control-zoom a{background:var(--panel)!important;color:var(--text)!important;border-color:var(--line)!important;width:40px!important;height:40px!important;line-height:40px!important;font-size:20px!important}
+.leaflet-control-zoom a:hover{background:var(--accent)!important;color:var(--on-accent)!important}
+.leaflet-tooltip{font-family:var(--font);font-size:13px;letter-spacing:.03em;background:var(--ink);color:var(--lime);border:1px solid var(--clay);border-radius:var(--r-pill);padding:5px 12px;box-shadow:var(--shadow)}
+.leaflet-tooltip:before{display:none}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--panel);color:var(--text);border:1px solid var(--line-strong)}
+.leaflet-control-attribution{background:var(--panel)!important;color:var(--text-3)!important;font-size:10px!important}
+.leaflet-control-attribution a{color:var(--text-2)!important}
+.leaflet-interactive:focus{outline:2px solid var(--text)}
+/* base map tint: dark theme gets a dimmed street map so the lime UI reads, satellite is only toned down */
+:root[data-theme=dark] #map:not(.is-satellite) .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.82) contrast(.92) saturate(.3)}
+:root[data-theme=dark] #map.is-satellite .leaflet-tile-pane{filter:brightness(.8) saturate(.8)}
+:root[data-theme=light] #map:not(.is-satellite) .leaflet-tile-pane{filter:saturate(.55) sepia(.12)}
+/* contour / boundary colours follow the theme (class names are set in fields.js / geography.js) */
+.geo-world{stroke:var(--teal);fill:var(--teal)}
+:root[data-theme=dark] .geo-world{stroke:var(--lime);fill:var(--lime)}
+.geo-region{stroke:var(--teal);fill:var(--teal)}
+:root[data-theme=dark] .geo-region{stroke:var(--lime);fill:var(--teal)}
+.geo-field{stroke:var(--teal);fill:var(--lime)}
+:root[data-theme=dark] .geo-field{stroke:var(--lime);fill:var(--teal)}
+.geo-field-imp{stroke:var(--clay);fill:var(--clay)}
+
+/* ---------- field detail page (opened from the map) ---------- */
+.role-gate{position:fixed;inset:0;z-index:3000;background:var(--ink);display:grid;place-items:center;padding:20px}
+.role-gate[hidden],.field-page[hidden]{display:none!important}
+.field-page{position:fixed;inset:0;overflow:auto;z-index:2000;background:var(--bg);color:var(--text)}
+.detail-shell{max-width:1220px;margin:auto;padding:24px clamp(16px,4vw,40px) 60px}
+.detail-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;gap:12px}
+.detail-brand{letter-spacing:.14em;font-size:15px}.detail-brand em{font-size:12px;font-style:normal;color:var(--text-3);margin-left:12px}
+.detail-hero{height:clamp(270px,40vw,470px);position:relative;overflow:hidden;border-radius:var(--r-card);background:var(--teal);border:1px solid var(--line)}
+.detail-hero img{width:100%;height:100%;object-fit:cover;filter:saturate(.8)}
+.hero-overlay{position:absolute;inset:auto 0 0;padding:34px;background:linear-gradient(transparent,rgba(26,26,26,.92));color:var(--lime)}
+.hero-overlay h1{font-size:clamp(32px,5.4vw,60px);margin:10px 0;line-height:1.05;font-weight:400}
+.hero-overlay span{font-size:13px;letter-spacing:.2em;text-transform:uppercase}
+.hero-overlay p{margin:0;color:rgba(224,255,194,.86)}
+.photo-credit{font-size:13px;color:var(--text-3);margin:12px 0 28px}
+.detail-layout{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:22px}
+.detail-main,.detail-aside{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:26px;align-self:start}
+.field-tabs{display:flex;flex-wrap:wrap;gap:8px;border-bottom:1px solid var(--line);padding-bottom:18px}
+.field-tabs button{background:transparent;border:1px solid var(--line-strong);border-radius:var(--r-pill);padding:10px 18px;min-height:44px;color:var(--text-2)}
+.field-tabs button:hover{background:var(--surface-2)}
+.field-tabs button.active{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.detail-section{padding-top:20px;line-height:1.7}
+.detail-section h2{font-size:30px;margin-top:0}
+.detail-section p{color:var(--text-2)}
+.topic-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin:22px 0}
+.topic-grid article{padding:20px;background:var(--surface);border:1px solid var(--line);border-radius:24px}
+.topic-grid h3{margin:7px 0}.topic-grid span,.topic-grid small{color:var(--text-3);font-size:13px}
+.notice{display:flex;gap:12px;align-items:flex-start;padding:15px 20px;background:var(--warn-bg);color:var(--warn-text);border:1px solid var(--warn-line);border-radius:22px;font-size:14px;line-height:1.6}
+.notice .ic{margin-top:3px}
+.steps{display:grid;gap:12px}
+.step{display:flex;gap:16px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);padding:16px;border-radius:24px}
+.step p{margin:5px 0 0}
+.detail-aside .metric{font-size:14px}
+.detail-aside h3{margin-top:0}
+/* number circles are shared by the portal and the field page */
+.num{display:inline-grid;place-items:center;flex:none;width:46px;height:46px;border-radius:50%;background:var(--accent);color:var(--on-accent);font-size:17px;letter-spacing:.04em;line-height:1;box-shadow:0 0 0 4px var(--surface)}
+.num.sm{width:34px;height:34px;font-size:14px;box-shadow:0 0 0 3px var(--surface)}
+@media(max-width:950px){.panel{width:300px}.panel-left{left:10px}.panel-right{right:10px}}
+@media(max-width:800px){.detail-layout{grid-template-columns:1fr}.detail-main,.detail-aside{padding:18px}}
+@media(max-width:700px){
+ .topbar{left:10px;right:10px;top:10px;height:62px}
+ .desktop-only,.live-dot,.brand small{display:none}
+ .brand>div{display:none}
+ .header-actions{gap:8px}
+ .brand strong{font-size:18px}
+ .lang-switch button{padding:6px 8px;min-width:36px;font-size:12px}
+ #backToPortal span:last-child{display:none}#backToPortal{padding:10px 12px}
+ .map-hint{top:84px;font-size:12px}
+ .map-actions{left:10px;right:10px;bottom:44px}.map-actions button,.upload-btn{padding:9px 12px;font-size:12px}
+ .map-legend{display:none}
+ .panel{top:150px;bottom:100px;width:calc(100vw - 20px);left:10px!important;right:auto!important}
+ .panel-right.open{top:55%;bottom:92px}.panel-left.open{bottom:47%}
+ .panel-content{padding:14px}.panel-header{padding:14px}.panel-header h2{font-size:18px}
+ .bottom-credit{font-size:9px;max-width:96%;overflow:hidden;text-overflow:ellipsis}
+ .leaflet-control-zoom{margin-top:90px!important}
+}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+/* Accessible offline map fallback (if external Leaflet fails). */
+#map.fallback-map{background:linear-gradient(140deg,#082e31,#195146 60%,#355d3f);display:flex;align-items:center;justify-content:center;color:#fff;z-index:0}
+.map-fallback-pane{width:min(900px,95%);padding:25px;display:flex;align-items:center;gap:30px;background:#062529e8;border:1px solid #ffffff55;border-radius:20px}
+.fallback-globe{font-size:clamp(70px,10vw,170px);color:#c3e88d;line-height:1}
+.map-fallback-copy h2{font-size:clamp(24px,3vw,42px);line-height:1.15;color:#fff;margin:6px 0}
+.map-fallback-copy p{color:#e7f3ee}
+.map-fallback-pane button{padding:12px 18px;background:#bcf18c;color:#10261a;border:0;border-radius:9px;font-weight:700;cursor:pointer;min-height:44px}
+.fallback-site-list{margin-top:12px;font-size:12px;opacity:.85}
+@media(max-width:640px){.map-fallback-pane{display:block}.fallback-globe{display:none}}

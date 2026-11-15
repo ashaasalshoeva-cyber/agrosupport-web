@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" role="img" aria-label="Schematic illustration of farm fields">
+ <defs>
+ <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#0e4749"/><stop offset="1" stop-color="#002626"/></linearGradient>
+ <pattern id="furrow" width="22" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(-15)"><rect width="22" height="22" fill="#0e4749"/><path d="M0 1H22" stroke="#E0FFC2" stroke-width="3" opacity=".3"/></pattern>
+ </defs>
+ <rect width="1000" height="1000" fill="url(#sky)"/>
+ <circle cx="720" cy="250" r="90" fill="#E0FFC2" opacity=".9"/>
+ <path d="M0 520L180 380 335 490 485 330 680 485 825 360 1000 480V760H0Z" fill="#0e4749"/>
+ <path d="M0 580L188 490 342 550 503 440 679 555 854 460 1000 565V780H0Z" fill="#302016"/>
+ <path d="M0 640C265 590 576 615 1000 630V1000H0Z" fill="#7B5B43"/>
+ <path d="M0 760L445 650 543 800 0 960Z" fill="url(#furrow)"/>
+ <path d="M455 655L1000 640V820L554 790Z" fill="#E0FFC2" opacity=".85"/>
+ <path d="M567 810L1000 850V1000H348Z" fill="#0e4749"/>
+ <path d="M0 980L552 800" stroke="#E0FFC2" stroke-width="8" opacity=".6"/>
+</svg>

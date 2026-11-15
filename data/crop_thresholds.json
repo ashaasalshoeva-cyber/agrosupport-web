@@ -1,0 +1,30 @@
+{
+  "wheat": {
+    "base_c": null,
+    "cap_c": null,
+    "maturity_gdd": null,
+    "heat_threshold_c": null,
+    "source": null
+  },
+  "potato": {
+    "base_c": null,
+    "cap_c": null,
+    "maturity_gdd": null,
+    "heat_threshold_c": null,
+    "source": null
+  },
+  "cotton": {
+    "base_c": null,
+    "cap_c": null,
+    "maturity_gdd": null,
+    "heat_threshold_c": null,
+    "source": null
+  },
+  "corn": {
+    "base_c": 10,
+    "cap_c": 30,
+    "maturity_gdd": null,
+    "heat_threshold_c": null,
+    "source": "https://cpc.ncep.noaa.gov/products/analysis_monitoring/cdus/degree_days/gdd.shtml"
+  }
+}

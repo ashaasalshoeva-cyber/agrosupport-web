@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<script src="/tools/tools-i18n.js"></script>
+<script>if(/[?&]embed=1/.test(location.search))document.documentElement.classList.add("embedded")</script>
+<style>.embedded header,.embedded .top,.embedded footer{display:none!important}.embedded body{margin:0!important;padding:8px!important}</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0d2521">
+  <title>AgroSupport — калькулятор водопотребления пшеницы</title>
+  <style>
+    :root { color-scheme: light; --ink:#132b27; --muted:#5e716b; --green:#11785c; --green2:#45b68e; --border:#dce7e1; --surface:#fff; --canvas:#f2f7f3; --pale:#e7f5ec; --blue:#417eaa; --amber:#a66a10; --shadow:0 12px 35px rgba(13,49,34,.08) }
+    * { box-sizing: border-box }
+    body { margin:0; font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif; color:var(--ink); background:var(--canvas); line-height:1.48 }
+    header { color:white; background:linear-gradient(120deg,#103d31 0%,#102923 60%,#183e36 100%); padding:29px clamp(18px,4vw,60px) 46px; position:relative; overflow:hidden }
+    header::after { content:""; position:absolute; width:360px;height:360px;border-radius:50%; border:65px solid #ffffff08; right:-80px;top:-190px }
+    .brand { font-size:15px;font-weight:800;letter-spacing:.015em;display:flex;align-items:center;gap:9px }
+    .brandicon { width:26px;height:26px;display:inline-grid;place-items:center;background:#a7e5b4;color:#175c40;border-radius:8px;font-size:15px }
+    header h1{font-size:clamp(25px,3.2vw,39px);line-height:1.14;margin:25px 0 12px;letter-spacing:-.045em;max-width:800px}
+    header p{margin:0; max-width:760px;color:#c5ddd4;font-size:15px}
+    .eyebrow{display:inline-block;background:#ffffff1a;border:1px solid #ffffff3a;color:#c6f1d5;border-radius:24px;padding:5px 12px;font-size:12px;font-weight:750;letter-spacing:.06em;text-transform:uppercase;margin-top:8px}
+    main {max-width:1360px;margin:-26px auto 40px;padding:0 clamp(15px,3.1vw,36px);position:relative}
+    .layout {display:grid;grid-template-columns:minmax(320px,370px) minmax(0,1fr);gap:19px;align-items:start}
+    .panel {background:var(--surface);border:1px solid var(--border);border-radius:19px;box-shadow:var(--shadow);padding:22px;min-width:0}
+    .panel h2{margin:0 0 5px;font-size:18px;letter-spacing:-.025em}
+    .panel .desc{color:var(--muted);font-size:12px;margin:0 0 19px}
+    .sectionhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:19px 0 12px;padding-top:15px;border-top:1px solid #edf1ee;font-size:12px;font-weight:800;color:#557268;text-transform:uppercase;letter-spacing:.06em}
+    .sectionhead:first-of-type{margin-top:7px;padding-top:0;border-top:none}
+    .fields{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+    .field{display:flex;flex-direction:column;gap:5px;min-width:0}
+    .field.wide{grid-column:1 / -1}
+    label{font-size:12px;font-weight:680;color:#47635a}
+    input,select {width:100%;border:1px solid #ccdcd3;background:#fbfdfa;padding:10px 11px;border-radius:10px;outline:none;font:inherit;font-size:13px;color:var(--ink);min-height:41px;transition:border-color .15s,box-shadow .15s}
+    input:focus,select:focus{border-color:#39a878;box-shadow:0 0 0 3px #28a87120}
+    input:disabled{background:#eef3f0;color:#82978c;cursor:not-allowed}
+    .seg {display:grid;grid-template-columns:1fr 1fr;background:#f0f5f1;border:1px solid #e0eae3;padding:4px;gap:4px;border-radius:12px;margin-bottom:13px}
+    .seg button{border:0;background:transparent;color:#62776d;font-weight:700;font-size:12px;border-radius:9px;padding:9px 3px;cursor:pointer}
+    .seg button[aria-pressed="true"]{background:white;color:#106247;box-shadow:0 2px 8px #0c3e2a13}
+    .micro{font-size:11px;color:#789084;margin:6px 0 0}
+    .note{font-size:12px;color:#60796d;padding:11px 12px;background:#f1f7f2;border-left:3px solid #85c99d;border-radius:6px;margin:13px 0}
+    .buttons{display:grid;gap:8px;margin-top:16px}
+    button.primary,button.secondary{border:0;padding:12px 14px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;transition:filter .15s}
+    button.primary{background:#137a5a;color:white}
+    button.primary:hover{filter:brightness(1.08)}
+    button.secondary{background:#e8f5ed;color:#176747}
+    button:disabled{cursor:wait;opacity:.55}
+    .status {font-size:12px;line-height:1.5;margin-top:12px;border-radius:9px;padding:11px 12px;background:#f0f7f3;color:#32654b}
+    .status.error{background:#fff1eb;color:#a24522}
+    .status.info{background:#eef4fa;color:#315e85}
+    .resultCol{display:grid;gap:19px}
+    .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+    .kpi{background:#fff;border:1px solid var(--border);border-radius:15px;padding:17px 15px;box-shadow:var(--shadow);min-width:0}
+    .kpi .key{font-size:11px;font-weight:700;color:var(--muted);min-height:31px}
+    .kpi .value{font-size:clamp(19px,2.25vw,27px);font-weight:850;letter-spacing:-.05em;line-height:1.2;margin:6px 0 4px;overflow-wrap:anywhere}
+    .kpi .unit{font-size:11px;color:#658175}
+    .kpi.focus{border-color:#9bd8b2;background:linear-gradient(155deg,#e9f7ed,#fff)}
+    .kpi.focus .value{color:#0d7956}
+    .charttop{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+    .legend{display:flex;gap:15px;align-items:center;font-size:11px;color:#668075;flex-wrap:wrap;margin-top:6px}
+    .linekey{display:inline-block;width:20px;height:3px;border-radius:5px;vertical-align:middle;margin-right:4px;background:var(--green)}
+    .linekey.blue{background:var(--blue)}
+    #graph{width:100%;height:auto;display:block;margin-top:12px;aspect-ratio:980/310}
+    .phaseRow{display:flex;align-items:center;gap:14px;min-width:0;margin-top:14px}
+    .phaseName{width:115px;flex:none;font-size:12px;font-weight:700}
+    .phaseTrack{background:#edf4ee;position:relative;height:16px;flex:1;min-width:0;border-radius:6px;overflow:hidden}
+    .phaseFill{height:100%;border-radius:6px;background:linear-gradient(90deg,#8dd9b0,#218b69)}
+    .phaseValue{width:80px;flex:none;text-align:right;font-weight:750;font-size:12px}
+    .phaseCaption{font-size:11px;color:var(--muted);margin-top:3px}
+    .tableWrap{overflow:auto;border:1px solid #e5ede8;border-radius:11px;margin-top:13px}
+    table{width:100%;border-collapse:collapse;font-size:12px;min-width:560px}
+    th{color:#637b70;background:#f5f9f6;font-size:11px;text-align:left;font-weight:800;padding:10px 12px;white-space:nowrap}
+    td{padding:12px;border-top:1px solid #ebf0ec;white-space:nowrap}
+    td:not(:first-child),th:not(:first-child){text-align:right}
+    tr:last-child{background:#f2f8f3;font-weight:800}
+    .footerinfo{font-size:12px;line-height:1.7;color:#5c786a;margin:0}
+    .pill{font-size:11px;background:#e3f3e8;color:#267049;border-radius:20px;padding:4px 9px;font-weight:750;display:inline-block}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .actions button{background:white;border:1px solid #bad3c1;color:#21714f;padding:9px 13px;border-radius:10px;font-weight:750;cursor:pointer}
+    a{color:#0d7956}
+    .mobileOnly{display:none}
+    @media(max-width:980px){.layout{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:600px){header{padding-bottom:48px} main{padding:0 10px}.panel{padding:16px;border-radius:14px}.kpi{padding:13px}.kpis{gap:9px}.fields{gap:9px}.phaseName{width:94px}.phaseValue{width:65px}.seg button{font-size:11px}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="brand"><span class="brandicon">✦</span> AGROSUPPORT <span style="font-weight:450;opacity:.65">/ Water Intelligence</span></div>
+  <div class="eyebrow">FAO-56 • NASA POWER</div>
+  <h1>Водопотребление пшеницы</h1>
+  <p>Расчёт потребности культуры в воде и ориентировочного объёма полива по фазам роста. Два режима: демонстрационные параметры или реальные исторические метеоданные NASA POWER.</p>
+</header>
+<main>
+  <div class="layout">
+    <aside class="panel" aria-label="Параметры калькулятора">
+      <h2>Параметры поля</h2>
+      <p class="desc">Измените значения — результаты обновятся автоматически.</p>
+      <div class="seg" role="group" aria-label="Источник климатических данных">
+        <button id="demoMode" type="button" aria-pressed="true">Демо / вручную</button>
+        <button id="nasaMode" type="button" aria-pressed="false">NASA POWER</button>
+      </div>
+      <div class="sectionhead">Культура и поле</div>
+      <div class="fields">
+        <div class="field wide"><label for="crop">Тип пшеницы</label><select id="crop"><option value="spring" selected>Яровая пшеница</option><option value="winter">Озимая пшеница</option></select></div>
+        <div class="field"><label for="area">Площадь, га</label><input id="area" type="number" min="0.01" max="100000" step="0.1" value="5"></div>
+        <div class="field"><label for="start">Дата посева</label><input id="start" type="date" value="2025-03-01"></div>
+        <div class="field"><label for="efficiency">КПД орошения, %</label><input id="efficiency" type="number" min="1" max="100" step="1" value="75"></div>
+        <div class="field"><label for="rainPct">Полезная доля осадков, %</label><input id="rainPct" type="number" min="0" max="100" step="1" value="80"></div>
+      </div>
+      <div class="sectionhead">Продолжительность фаз, дни</div>
+      <div class="fields">
+        <div class="field"><label for="d1">Начальная</label><input id="d1" type="number" min="1" max="365" step="1" value="15"></div>
+        <div class="field"><label for="d2">Развитие</label><input id="d2" type="number" min="1" max="365" step="1" value="25"></div>
+        <div class="field"><label for="d3">Середина сезона</label><input id="d3" type="number" min="1" max="365" step="1" value="50"></div>
+        <div class="field"><label for="d4">Созревание</label><input id="d4" type="number" min="1" max="365" step="1" value="30"></div>
+      </div>
+      <div class="sectionhead">Коэффициенты FAO-56 (Kc)</div>
+      <div class="fields">
+        <div class="field"><label for="kcIni">Kc в начале</label><input id="kcIni" type="number" min="0" max="2.5" step="0.05" value="0.3"></div>
+        <div class="field"><label for="kcMid">Kc в середине</label><input id="kcMid" type="number" min="0" max="2.5" step="0.05" value="1.15"></div>
+        <div class="field"><label for="kcEnd">Kc в конце</label><input id="kcEnd" type="number" min="0" max="2.5" step="0.05" value="0.25"></div>
+      </div>
+      <div id="manualFields">
+        <div class="sectionhead">Климат — демонстрационные значения</div>
+        <div class="fields">
+          <div class="field"><label for="etoManual">Средняя ETo, мм/сутки</label><input id="etoManual" type="number" min="0" max="20" step="0.1" value="4.5"></div>
+          <div class="field"><label for="rainManual">Осадки за сезон, мм</label><input id="rainManual" type="number" min="0" max="10000" step="1" value="80"></div>
+        </div>
+        <div class="note">Демо: ETo постоянна, осадки равномерно распределены по дням. Эти цифры не являются наблюдениями NASA и не заменяют местные измерения.</div>
+      </div>
+      <div id="nasaFields" hidden>
+        <div class="sectionhead">NASA POWER — координаты</div>
+        <div class="fields">
+          <div class="field"><label for="latitude">Широта, °</label><input id="latitude" type="number" min="-90" max="90" step="0.0001" value="38.56"></div>
+          <div class="field"><label for="longitude">Долгота, °</label><input id="longitude" type="number" min="-180" max="180" step="0.0001" value="68.79"></div>
+          <div class="field wide"><label for="altitude">Высота поля над уровнем моря, м</label><input id="altitude" type="number" min="-400" max="5000" step="10" value="800"></div>
+        </div>
+        <p class="micro">По умолчанию — примерные координаты Душанбе. Укажите координаты своего поля. NASA предоставляет исторические данные, а не прогноз будущей погоды.</p>
+        <div class="buttons"><button id="loadNasa" class="primary" type="button">Загрузить данные NASA POWER</button></div>
+      </div>
+      <div class="buttons">
+        <button id="calculate" class="primary" type="button">Рассчитать водопотребление</button>
+        <button id="reset" class="secondary" type="button">Вернуть демо-значения</button>
+      </div>
+      <div id="status" class="status" role="status" aria-live="polite">Демо: используются вводимые значения, а не спутниковые измерения.</div>
+    </aside>
+    <div class="resultCol">
+      <div class="kpis" id="kpis">
+        <article class="kpi"><div class="key">Водопотребление культуры</div><div class="value" id="totalEt">—</div><div class="unit">мм за сезон</div></article>
+        <article class="kpi"><div class="key">Нетто-потребность в поливе</div><div class="value" id="netMm">—</div><div class="unit">мм за сезон</div></article>
+        <article class="kpi focus"><div class="key">Забор воды на полив</div><div class="value" id="grossM3">—</div><div class="unit">м³ на всё поле</div></article>
+        <article class="kpi"><div class="key">Полив на гектар</div><div class="value" id="perHa">—</div><div class="unit">м³/га за сезон</div></article>
+      </div>
+      <section class="panel">
+        <div class="charttop"><div><h2>Динамика водопотребления</h2><p class="desc" style="margin-bottom:0">Ежедневная эвапотранспирация, мм/сутки</p></div><span class="pill" id="sourcePill">Демо-данные</span></div>
+        <div class="legend"><span><span class="linekey"></span>Пшеница ETc</span><span><span class="linekey blue"></span>Эталонная ETo</span></div>
+        <svg id="graph" viewBox="0 0 980 310" role="img" aria-label="График ETc и ETo по дням вегетации"></svg>
+        <div class="actions"><button id="exportCsv" type="button">Экспорт CSV по дням</button></div>
+      </section>
+      <section class="panel">
+        <h2>Потребность по фазам роста</h2>
+        <p class="desc">Суммарная ETc по этапам вегетации, мм. Длительности и коэффициенты можно менять.</p>
+        <div id="phaseBars"></div>
+        <div class="tableWrap"><table><thead><tr><th>Фаза</th><th>Дней</th><th>ETc, мм</th><th>Полезные осадки, мм</th><th>Полив брутто, мм</th></tr></thead><tbody id="phaseTable"></tbody></table></div>
+      </section>
+      <section class="panel">
+        <h2>Что означает результат</h2>
+        <p class="footerinfo"><strong>ETc = Kc × ETo</strong> — потребность культуры в воде при отсутствии водного стресса. <strong>Нетто-полив = max(0, ETc − полезные осадки)</strong>, рассчитывается отдельно за каждый день. <strong>Брутто-полив = нетто / (КПД / 100)</strong>. Для перевода в объём: 1 мм × 1 га = 10 м³.</p>
+        <p class="footerinfo" style="margin-top:11px">Ограничения: не моделируются запас влаги в почве, капиллярный подъём, сток, глубокая инфильтрация, снег, стресс культуры и фактические сроки поливов. Коэффициент полезных осадков — упрощённое допущение, а не измеряемая NASA величина. При суточном вычитании избыточные осадки не переносятся на следующие дни. Для реального поливного графика нужен водный баланс корнеобитаемого слоя и проверка агрономом.</p>
+        <p class="footerinfo" style="margin-top:13px"><strong>Методология:</strong> <a href="https://www.fao.org/4/X0490E/x0490e0b.htm" target="_blank" rel="noopener noreferrer">FAO-56 — коэффициенты Kc</a> · <a href="https://www.fao.org/4/X0490E/x0490e06.htm" target="_blank" rel="noopener noreferrer">FAO-56 — Пенман—Монтейт</a> · <a href="https://power.larc.nasa.gov/docs/services/api/temporal/daily/" target="_blank" rel="noopener noreferrer">NASA POWER Daily API</a>.</p>
+      </section>
+    </div>
+  </div>
+</main>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const ids = ['area','start','efficiency','rainPct','d1','d2','d3','d4','kcIni','kcMid','kcEnd','etoManual','rainManual','latitude','longitude','altitude'];
+  const fmt = (n,d=1) => new Intl.NumberFormat('ru-RU',{maximumFractionDigits:d,minimumFractionDigits:0}).format(n);
+  const read = id => Number($(id).value);
+  const names = ['Начальная','Развитие','Середина сезона','Созревание'];
+  let mode='demo', nasaWeather=null, nasaSourceKey=null, latest=null;
+  function message(s,type='ok'){ $('status').textContent=s; $('status').className='status'+(type==='ok'?'':' '+type); }
+  function setVisible(id,visible){ $(id).hidden=!visible; $(id).style.display=visible?'':'none'; }
+  function utcDate(str){ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(str); if(!m)throw new Error('Выберите корректную дату посева.');const d=new Date(Date.UTC(+m[1],+m[2]-1,+m[3]));if(d.toISOString().slice(0,10)!==str)throw new Error('Некорректная дата посева.');return d; }
+  const dateISO = d => d.toISOString().slice(0,10);
+  function plusDays(d,n){const a=new Date(d.getTime());a.setUTCDate(a.getUTCDate()+n);return a;}
+  const nasaKey=()=>[$('start').value,read('latitude'),read('longitude'),read('altitude'),read('d1'),read('d2'),read('d3'),read('d4')].join('|');
+  function config(){
+    const area=read('area'),eff=read('efficiency'),rainPct=read('rainPct');
+    const ds=['d1','d2','d3','d4'].map(read),ks=['kcIni','kcMid','kcEnd'].map(read);
+    if(!Number.isFinite(area)||area<=0||area>100000)throw Error('Площадь должна быть больше 0 и не превышать 100 000 га.');
+    if(!(eff>0&&eff<=100))throw Error('КПД орошения должен быть больше 0 и не превышать 100%.');
+    if(!(rainPct>=0&&rainPct<=100))throw Error('Полезная доля осадков должна быть в пределах 0–100%.');
+    if(ds.some(x=>!Number.isInteger(x)||x<1||x>365))throw Error('Каждая фаза должна длиться от 1 до 365 полных дней.');
+    const days=ds.reduce((a,b)=>a+b,0);
+    if(days>730)throw Error('Суммарная длительность не должна превышать 730 дней.');
+    if(ks.some(x=>!Number.isFinite(x)||x<0||x>2.5))throw Error('Коэффициенты Kc должны быть в диапазоне 0–2,5.');
+    const start=utcDate($('start').value);
+    if(mode==='demo'&&(!(read('etoManual')>=0&&read('etoManual')<=20)||!(read('rainManual')>=0&&read('rainManual')<=10000)))throw Error('Проверьте ETo (0–20) и осадки (0–10 000 мм).');
+    if(mode==='nasa'&&(!(read('latitude')>=-90&&read('latitude')<=90)||!(read('longitude')>=-180&&read('longitude')<=180)||!(read('altitude')>=-400&&read('altitude')<=5000)))throw Error('Проверьте широту, долготу и высоту поля.');
+    return {area,eff,rainPct,ds,ks,days,start};
+  }
+  function kcForDay(i,c){
+    const [a,b,m,l]=c.ds, [ki,km,ke]=c.ks;
+    if(i<a)return ki;
+    if(i<a+b)return ki+(km-ki)*(i-a+1)/b;
+    if(i<a+b+m)return km;
+    return km+(ke-km)*(i-a-b-m+1)/l;
+  }
+  function stageAt(i,ds){let s=i;for(let j=0;j<ds.length;j++){if(s<ds[j])return j;s-=ds[j];}return 3;}
+  function clearResults(){
+    for(const id of ['totalEt','netMm','grossM3','perHa'])$(id).textContent='—';
+    $('graph').innerHTML='';$('phaseBars').innerHTML='';$('phaseTable').innerHTML='';
+    $('sourcePill').textContent='Нет актуального расчёта';
+  }
+  function calculate(){
+    try{
+      const c=config();
+      if(mode==='nasa'&&(!nasaWeather||nasaSourceKey!==nasaKey())){
+        latest=null;clearResults();message('Нажмите «Загрузить данные NASA POWER» для выбранных координат, даты и фаз.', 'info');return;
+      }
+      const weather=mode==='nasa'?nasaWeather:Array.from({length:c.days},(_,i)=>({date:dateISO(plusDays(c.start,i)),eto:read('etoManual'),rain:read('rainManual')/c.days}));
+      if(weather.length!==c.days)throw Error('Число дней NASA не соответствует параметрам сезона. Загрузите данные заново.');
+      const phases=c.ds.map((d,i)=>({name:names[i],days:d,etc:0,net:0,gross:0,rainEffective:0,rain:0}));
+      const daily=weather.map((w,i)=>{
+        const phase=stageAt(i,c.ds),kc=kcForDay(i,c),etc=kc*w.eto;
+        // Simplified daily effective rainfall: no soil-water carryover.
+        const rainfall=Math.max(0,w.rain),effective=Math.min(etc,rainfall*c.rainPct/100);
+        const net=Math.max(0,etc-effective),gross=net/(c.eff/100);
+        const p=phases[phase];p.etc+=etc;p.net+=net;p.gross+=gross;p.rainEffective+=effective;p.rain+=rainfall;
+        return {date:w.date,phase:names[phase],eto:w.eto,kc,etc,rain:rainfall,effective,net,gross,volume:gross*c.area*10};
+      });
+      const sum=k=>daily.reduce((a,x)=>a+x[k],0);
+      latest={c,phases,daily,etc:sum('etc'),net:sum('net'),gross:sum('gross'),rain:sum('rain'),effective:sum('effective')};
+      render(latest);
+      if(mode==='demo')message('Рассчитано по демонстрационным параметрам. Для реальных исторических данных переключитесь на NASA POWER.');
+      else message('Источник: NASA POWER Daily API (AG); ETo рассчитана по FAO-56 из метеопараметров. Исторический период: '+daily[0].date+' — '+daily[daily.length-1].date+'.');
+    }catch(e){latest=null;clearResults();message(e.message||'Ошибка расчёта.','error');}
+  }
+  function render(x){
+    $('totalEt').textContent=fmt(x.etc);
+    $('netMm').textContent=fmt(x.net);
+    $('grossM3').textContent=fmt(x.gross*x.c.area*10,0);
+    $('perHa').textContent=fmt(x.gross*10,0);
+    $('sourcePill').textContent=mode==='nasa'?'NASA POWER / Исторические':'Демо-данные';
+    drawGraph(x);
+    const max=Math.max(1,...x.phases.map(p=>p.etc));
+    $('phaseBars').innerHTML=x.phases.map(p=>`<div class="phaseRow"><div class="phaseName">${p.name}<div class="phaseCaption">${p.days} дней</div></div><div class="phaseTrack"><div class="phaseFill" style="width:${(p.etc/max*100).toFixed(3)}%"></div></div><div class="phaseValue">${fmt(p.etc)} мм</div></div>`).join('');
+    const row=p=>`<tr><td>${p.name}</td><td>${fmt(p.days,0)}</td><td>${fmt(p.etc)}</td><td>${fmt(p.rainEffective)}</td><td>${fmt(p.gross)}</td></tr>`;
+    $('phaseTable').innerHTML=x.phases.map(row).join('')+row({name:'Всего',days:x.c.days,etc:x.etc,rainEffective:x.effective,gross:x.gross});
+  }
+  function drawGraph(x){
+    const data=x.daily, svg=$('graph');
+    const W=980,H=310,L=55,R=20,T=22,B=53;
+    const w=W-L-R,h=H-T-B;
+    const vmax=Math.max(1,...data.map(d=>Math.max(d.eto,d.etc)));
+    const ymax=Math.ceil(vmax/2)*2;
+    const X=i=>L+w*(i/Math.max(1,data.length-1));
+    const Y=v=>T+h-h*v/ymax;
+    const path=key=>data.map((d,i)=>(i?'L':'M')+X(i).toFixed(2)+' '+Y(d[key]).toFixed(2)).join(' ');
+    const area=path('etc')+` L${X(data.length-1).toFixed(2)} ${Y(0).toFixed(2)} L${X(0).toFixed(2)} ${Y(0).toFixed(2)} Z`;
+    let s=`<defs><linearGradient id="etcFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#56bc8a" stop-opacity=".29"/><stop offset="100%" stop-color="#56bc8a" stop-opacity=".01"/></linearGradient></defs>`;
+    const boundaries=[];let b=0;for(const d of x.c.ds){b+=d;boundaries.push(b);}
+    let prev=0;for(let j=0;j<4;j++){
+      const end=boundaries[j],x0=X(prev),x1=X(Math.min(data.length-1,end));
+      if(j%2===0)s+=`<rect x="${x0}" y="${T}" width="${Math.max(0,x1-x0)}" height="${h}" fill="#eff6ee" opacity=".55"/>`;
+      const mid=X((prev+end-1)/2);
+      s+=`<text x="${mid}" y="${H-12}" text-anchor="middle" font-size="11" fill="#62776d">${['Начало','Развитие','Середина','Созревание'][j]}</text>`;
+      if(j<3)s+=`<line x1="${x1}" x2="${x1}" y1="${T}" y2="${T+h}" stroke="#b4cec0" stroke-dasharray="4 5"/>`;
+      prev=end;
+    }
+    for(let j=0;j<=4;j++){
+      const val=ymax*j/4,y=Y(val);
+      s+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="#d6e7db" stroke-dasharray="3 5"/><text x="${L-11}" y="${y+4}" text-anchor="end" font-size="11" fill="#688277">${fmt(val)}</text>`;
+    }
+    s+=`<path d="${area}" fill="url(#etcFill)"/>`;
+    s+=`<path d="${path('eto')}" fill="none" stroke="#417eaa" stroke-width="2.3" stroke-linejoin="round"/>`;
+    s+=`<path d="${path('etc')}" fill="none" stroke="#14805f" stroke-width="3.1" stroke-linejoin="round"/>`;
+    svg.innerHTML=s;
+  }
+  function satVP(t){return 0.6108*Math.exp((17.27*t)/(t+237.3));}
+  function dayOfYear(d){const jan1=Date.UTC(d.getUTCFullYear(),0,1);return Math.floor((d.getTime()-jan1)/86400000)+1;}
+  function penmanMonteith(values,d,lat,z){
+    const {t,tmax,tmin,tdew,u2,ps,rs}=values;
+    const es=(satVP(tmax)+satVP(tmin))/2;
+    const ea=satVP(tdew);
+    const delta=4098*satVP(t)/((t+237.3)*(t+237.3));
+    const gamma=0.000665*ps;
+    const phi=lat*Math.PI/180,J=dayOfYear(d);
+    const dr=1+0.033*Math.cos(2*Math.PI*J/365);
+    const dec=0.409*Math.sin(2*Math.PI*J/365-1.39);
+    const xx=Math.max(-1,Math.min(1,-Math.tan(phi)*Math.tan(dec)));
+    const ws=Math.acos(xx);
+    const Ra=(24*60/Math.PI)*0.0820*dr*(ws*Math.sin(phi)*Math.sin(dec)+Math.cos(phi)*Math.cos(dec)*Math.sin(ws));
+    const Rso=(0.75+2e-5*z)*Math.max(0,Ra);
+    const ratio=Rso>0?Math.max(0,Math.min(1,rs/Rso)):0;
+    const sigma=4.903e-9;
+    const longwave=sigma*(Math.pow(tmax+273.16,4)+Math.pow(tmin+273.16,4))/2*
+      (0.34-0.14*Math.sqrt(Math.max(0,ea)))*Math.max(0,1.35*ratio-0.35);
+    const rn=0.77*rs-Math.max(0,longwave);
+    const numerator=0.408*delta*rn + gamma*(900/(t+273))*u2*Math.max(0,es-ea);
+    const denominator=delta+gamma*(1+0.34*u2);
+    return Math.max(0,numerator/denominator);
+  }
+  async function loadNasa(){
+    try{
+      const c=config(),lat=read('latitude'),lon=read('longitude'),alt=read('altitude');
+      const keyAtRequest=nasaKey();
+      nasaWeather=null;nasaSourceKey=null;latest=null;clearResults();
+      const first=dateISO(c.start).replace(/-/g,''),last=dateISO(plusDays(c.start,c.days-1)).replace(/-/g,'');
+      const today=new Date();const todayUTC=Date.UTC(today.getFullYear(),today.getMonth(),today.getDate());
+      if(c.start.getTime()<Date.UTC(1981,0,1)||plusDays(c.start,c.days-1).getTime()>=todayUTC)throw Error('NASA POWER не предоставляет будущую погоду. Выберите полностью завершившийся исторический сезон (например, 2025 год).');
+      const params=['T2M','T2M_MAX','T2M_MIN','T2MDEW','WS2M','PS','ALLSKY_SFC_SW_DWN','PRECTOTCORR'];
+      const url=new URL('https://power.larc.nasa.gov/api/temporal/daily/point');
+      for(const [k,v] of Object.entries({parameters:params.join(','),community:'AG',latitude:lat,longitude:lon,start:first,end:last,format:'JSON','time-standard':'LST'}))url.searchParams.set(k,String(v));
+      const b=$('loadNasa');b.disabled=true;b.textContent='Загрузка NASA…';message('Получение суточных данных NASA POWER. Для запроса нужен интернет.','info');
+      const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),30000);
+      let json;
+      try{
+        const res=await fetch(url.toString(),{signal:controller.signal});
+        if(!res.ok)throw Error('NASA POWER ответил с кодом HTTP '+res.status+'.');
+        json=await res.json();
+      }finally{clearTimeout(timeout);b.disabled=false;b.textContent='Загрузить данные NASA POWER';}
+      const p=json?.properties?.parameter;
+      if(!p||params.some(k=>!p[k]))throw Error('NASA POWER вернул неполный набор климатических показателей.');
+      const newWeather=[];
+      for(let i=0;i<c.days;i++){
+        const d=plusDays(c.start,i),key=dateISO(d).replace(/-/g,'');
+        const readNASA=k=>Number(p[k][key]);
+        const vals=params.map(readNASA);
+        if(vals.some(v=>!Number.isFinite(v)||v<=-900))throw Error('Нет полного набора метеоданных NASA для '+dateISO(d)+'. Выберите другой период.');
+        const [t,tmax,tmin,tdew,u2,ps,rs,rain]=vals;
+        if(tmin>tmax||ps<40||ps>115||rs<0||u2<0||rain<0)throw Error('Некорректные метеоданные NASA для '+dateISO(d)+'.');
+        const eto=penmanMonteith({t,tmax,tmin,tdew,u2,ps,rs},d,lat,alt);
+        if(!Number.isFinite(eto)||eto>35)throw Error('Не удалось рассчитать ETo для '+dateISO(d)+'.');
+        newWeather.push({date:dateISO(d),eto,rain});
+      }
+      if(nasaKey()!==keyAtRequest)throw Error('Параметры поля изменились во время загрузки. Запросите NASA POWER ещё раз.');
+      nasaWeather=newWeather;nasaSourceKey=keyAtRequest;calculate();
+    }catch(e){message((e.name==='AbortError'?'Превышено время ожидания NASA POWER.':e.message||'Ошибка доступа к NASA POWER.')+' Если сеть или CORS блокирует запрос, используйте демо-режим.','error');}
+  }
+  function switchMode(m){mode=m;$('demoMode').setAttribute('aria-pressed',String(m==='demo'));$('nasaMode').setAttribute('aria-pressed',String(m==='nasa'));setVisible('manualFields',m==='demo');setVisible('nasaFields',m==='nasa');calculate();}
+  function setCropPreset(t){
+    const spring=t==='spring';
+    const preset=spring?{d1:15,d2:25,d3:50,d4:30,kcIni:.30,kcMid:1.15,kcEnd:.25}:{d1:30,d2:85,d3:90,d4:40,kcIni:.70,kcMid:1.15,kcEnd:.30};
+    for(const [id,n] of Object.entries(preset))$(id).value=n;
+    nasaWeather=null;nasaSourceKey=null;
+    calculate();
+    if(!spring)message('Для озимой пшеницы длительности фаз — пример для демонстрации. Скорректируйте их по местному календарю (включая зимовку). Кс=0,70 предполагает незамерзающую почву.', 'info');
+  }
+  function reset(){ $('crop').value='spring';for(const [k,v] of Object.entries({area:5,start:'2025-03-01',efficiency:75,rainPct:80,d1:15,d2:25,d3:50,d4:30,kcIni:.30,kcMid:1.15,kcEnd:.25,etoManual:4.5,rainManual:80,latitude:38.56,longitude:68.79,altitude:800}))$(k).value=v;nasaWeather=null;nasaSourceKey=null;switchMode('demo');}
+  function csv(){if(!latest){message('Сначала выполните расчёт.', 'info');return;}
+    const header=['Дата','Фаза','ETo (мм/сут)','Kc','ETc (мм/сут)','Осадки (мм)','Полезные осадки (мм)','Полив нетто (мм)','Полив брутто (мм)','Полив брутто (м3 для поля)'];
+    const n=n=>Number(n).toFixed(3);
+    const content='\ufeff'+[header.join(';'),...latest.daily.map(d=>[d.date,d.phase,n(d.eto),n(d.kc),n(d.etc),n(d.rain),n(d.effective),n(d.net),n(d.gross),n(d.volume)].join(';'))].join('\r\n');
+    const blob=new Blob([content],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=`agrosupport_wheat_water_${mode}_${latest.daily[0].date}.csv`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
+  }
+  ids.forEach(id=>$(id).addEventListener('input',calculate));
+  $('crop').addEventListener('change',e=>setCropPreset(e.target.value));
+  $('calculate').addEventListener('click',calculate);
+  $('loadNasa').addEventListener('click',loadNasa);
+  $('demoMode').addEventListener('click',()=>switchMode('demo'));
+  $('nasaMode').addEventListener('click',()=>switchMode('nasa'));
+  $('reset').addEventListener('click',reset);
+  $('exportCsv').addEventListener('click',csv);
+  calculate();
+})();
+</script>
+</body>
+</html>

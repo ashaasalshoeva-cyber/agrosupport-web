@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ru"><head>
+<script src="/tools/tools-i18n.js"></script>
+<script>if(/[?&]embed=1/.test(location.search))document.documentElement.classList.add("embedded")</script>
+<style>.embedded header,.embedded .top,.embedded footer{display:none!important}.embedded body{margin:0!important;padding:8px!important}</style><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AgroSupport | NASA · NPK · AI</title>
+<link rel="icon" href="../assets/favicon.png"><link rel="stylesheet" href="./agro-lab.css"></head>
+<body>
+<header class="top"><a class="brand" href="../index.html"><span class="mark">A</span><span>AgroSupport<small>AGRONOMIC INTELLIGENCE LAB · 0.1.5</small></span></a><nav><a href="../index.html">К проекту</a><a href="./wheat-water.html">Водопотребление</a><a href="./npk-original.html">Калькулятор удобрений</a></nav></header>
+<main>
+<section class="hero"><div class="eyebrow"><span class="pulse"></span> NASA POWER / SOIL NUTRIENT BUDGET / OPTIONAL AI</div>
+<h1>Данные NASA.<br><em>Баланс почвы.</em> Решения.</h1><p>Единая аналитическая панель для пшеницы: реальные исторические метеоданные по координатам, прозрачный расчёт баланса N–P₂O₅–K₂O и рекомендации с указанием их происхождения.</p>
+<div class="hero-links"><a href="#nasa" class="button primary">Загрузить NASA POWER ↗</a><a href="#npk" class="button secondary">Рассчитать NPK</a></div></section>
+<div class="notice"><strong>Граница данных:</strong> NASA POWER предоставляет сеточные данные о погоде, но <b>не определяет</b> содержание N, P и K в почве. Для оценки плодородия необходимы лабораторные пробы. Коэффициенты в NPK-блоке — условные демонстрационные параметры.</div>
+<section id="nasa" class="section"><div class="sect-head"><span class="number">01 / NASA DATA</span><h2>Метеоданные конкретной точки</h2><p>NASA POWER Daily Point API · исторические наблюдательно-модельные климатические ряды, не прогноз и не датчик на поле.</p></div>
+<div class="panel"><div class="form-grid">
+<label>Широта (latitude)<input id="lat" type="number" step="0.0001" min="-90" max="90" value="38.5598"><small>Пример: Душанбе; не точные координаты поля</small></label>
+<label>Долгота (longitude)<input id="lon" type="number" step="0.0001" min="-180" max="180" value="68.7870"></label>
+<label>Начало периода<input id="from" type="date" value="2025-03-01"></label><label>Конец периода<input id="to" type="date" value="2025-06-30"></label></div>
+<div class="action-line"><button id="loadNASA" class="button primary" type="button">Загрузить проверенные данные NASA</button><span id="nasaState" class="status" role="status">Данные пока не запрошены</span></div></div>
+<div id="nasaOutput" hidden><div class="metrics">
+<div class="metric"><span>Осадки за период</span><strong id="rainVal">—</strong><small>NASA POWER · мм, при полном покрытии</small></div>
+<div class="metric"><span>Средняя температура</span><strong id="tempVal">—</strong><small>°C · по доступным дням</small></div>
+<div class="metric"><span>Покрытие ряда</span><strong id="coverageVal">—</strong><small>Дней с температурой / всего</small></div>
+<div class="metric"><span>Происхождение</span><strong id="originVal" class="smaller">—</strong><small id="asofVal">—</small></div></div>
+<div class="panel"><div class="chart-head"><h3>Динамика по месяцам</h3><div class="tabset" id="metricTabs"><button class="active" data-metric="PRECTOTCORR">Осадки</button><button data-metric="T2M">Температура</button><button data-metric="ALLSKY_SFC_SW_DWN">Радиация</button><button data-metric="WS2M">Ветер</button></div></div><div class="chart-container"><svg id="nasaChart" role="img" aria-label="График NASA POWER" viewBox="0 0 760 300"></svg></div><div class="chart-foot" id="chartSource"></div></div>
+<div class="panel"><div class="chart-head"><h3>Таблица NASA POWER</h3><button id="exportCSV" class="button secondary" type="button">Экспорт CSV</button></div><div class="table-scroll"><table><thead><tr><th>Месяц</th><th>Температура, °C</th><th>Осадки, мм</th><th>Радиация, кВт·ч/м²/сут</th><th>Ветер, м/с</th></tr></thead><tbody id="weatherRows"></tbody></table></div></div></div></section>
+<section id="npk" class="section"><div class="sect-head"><span class="number">02 / SOIL FERTILITY</span><h2>Сохранение баланса NPK</h2><p>Поступление элементов с удобрениями минус вынос с урожаем, соломой и оценённые потери. Все величины — кг/га соответствующего элемента в форме N, P₂O₅ или K₂O.</p></div>
+<div class="panel"><div class="form-grid">
+<label>Площадь поля, га<input data-npk="area_ha" type="number" value="5" min="0.01" step="0.1"></label>
+<label>План урожайности пшеницы, т/га<input data-npk="yield_t_ha" type="number" value="5" min="0.1" step="0.1"></label>
+<label>Соотношение солома/зерно<input data-npk="straw_ratio" type="number" value="1.1" min="0" max="4" step="0.1"></label>
+<label class="checkbox-label"><input data-npk="straw_exported" type="checkbox"><span>Солома вывозится с поля</span><small>Если остаётся на поле, её не считают экспортом питательных веществ</small></label>
+</div>
+<div class="table-scroll input-table"><table><thead><tr><th>Величина</th><th>N</th><th>P₂O₅</th><th>K₂O</th></tr></thead><tbody>
+<tr><th>Минеральные удобрения, кг элемента/га</th><td><input data-group="mineral_kg_ha" data-e="N" type="number" value="95" min="0"></td><td><input data-group="mineral_kg_ha" data-e="P2O5" type="number" value="35" min="0"></td><td><input data-group="mineral_kg_ha" data-e="K2O" type="number" value="25" min="0"></td></tr>
+<tr><th>Органика, кг элемента/га (по составу)</th><td><input data-group="organic_kg_ha" data-e="N" type="number" value="10" min="0"></td><td><input data-group="organic_kg_ha" data-e="P2O5" type="number" value="5" min="0"></td><td><input data-group="organic_kg_ha" data-e="K2O" type="number" value="10" min="0"></td></tr>
+<tr><th>Вынос зерном, кг/т зерна <small>демо</small></th><td><input data-group="grain_offtake_kg_t" data-e="N" type="number" value="22" min="0"></td><td><input data-group="grain_offtake_kg_t" data-e="P2O5" type="number" value="9" min="0"></td><td><input data-group="grain_offtake_kg_t" data-e="K2O" type="number" value="6" min="0"></td></tr>
+<tr><th>Вынос с соломой, кг/т соломы <small>демо</small></th><td><input data-group="straw_offtake_kg_t" data-e="N" type="number" value="5" min="0"></td><td><input data-group="straw_offtake_kg_t" data-e="P2O5" type="number" value="2" min="0"></td><td><input data-group="straw_offtake_kg_t" data-e="K2O" type="number" value="15" min="0"></td></tr>
+<tr><th>Оценённые потери, кг элемента/га</th><td><input data-group="estimated_loss_kg_ha" data-e="N" type="number" value="15" min="0"></td><td><input data-group="estimated_loss_kg_ha" data-e="P2O5" type="number" value="0" min="0"></td><td><input data-group="estimated_loss_kg_ha" data-e="K2O" type="number" value="0" min="0"></td></tr>
+</tbody></table></div>
+<div class="action-line"><button id="calcNPK" type="button" class="button primary">Рассчитать баланс NPK</button><span class="status" id="npkState" role="status">Пример, все входные параметры можно изменить</span></div></div>
+<div id="npkOutput" hidden><div class="metrics npk-metrics"><div class="metric"><span>Азот · N</span><strong id="nBalance">—</strong><small>кг/га · годовой баланс</small></div><div class="metric"><span>Фосфор · P₂O₅</span><strong id="pBalance">—</strong><small>кг/га · годовой баланс</small></div><div class="metric"><span>Калий · K₂O</span><strong id="kBalance">—</strong><small>кг/га · годовой баланс</small></div></div>
+<div class="panel"><h3>Из чего складывается баланс</h3><div class="table-scroll"><table><thead><tr><th>Элемент</th><th>Поступление</th><th>Вынос зерном</th><th>Вывоз соломы</th><th>Потери</th><th>Сальдо</th></tr></thead><tbody id="balanceRows"></tbody></table></div><p class="tiny">Положительное сальдо не означает измеренного повышения плодородия; отрицательное указывает на потенциальное истощение при заданных допущениях. Для реальных решений нужен анализ почвы и учёт севооборота.</p></div></div></section>
+<section id="ai" class="section"><div class="sect-head"><span class="number">03 / EXPLAINABLE AI</span><h2>Агрономический помощник</h2><p>ИИ не меняет формулы, исходные NASA-данные и NPK-результат. Он лишь объясняет проверенные вычисления, отмечает ограничения и помогает составить план проверки.</p></div>
+<div class="panel ai-panel"><div class="action-line"><button id="getAdvice" type="button" class="button primary">Объяснить расчёты</button><span id="aiStatus" role="status" class="status">Без API-ключа работает детерминированный помощник</span></div><div id="adviceText" class="advice" hidden></div><p class="tiny">При наличии OPENAI_API_KEY используется серверный OpenAI Responses API; ключ не передаётся браузеру. Данные NASA привязываются к проверенному ответу сервера, а не к произвольному тексту.</p></div></section>
+<footer><div><strong>AgroSupport · 2026</strong><p>Proof-of-concept. Не заменяет лабораторные анализы и консультацию агронома.</p></div><div><a href="https://power.larc.nasa.gov/docs/services/api/temporal/daily/" target="_blank" rel="noopener">NASA POWER API</a><a href="https://www.fao.org/4/x0490e/x0490e0b.htm" target="_blank" rel="noopener">FAO-56</a><a href="../index.html">Главная страница</a></div></footer>
+</main><script type="module" src="./agro-lab.js"></script></body></html>
